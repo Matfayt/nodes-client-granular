@@ -9,6 +9,9 @@ import thingSchema from './schemas/thing.js';
 // import global schema
 import globalSchema from './schemas/global.js'; 
 
+// import pluginSync from '@soundworks/plugin-sync/server.js'; 
+// import pluginCheckin from '@soundworks/plugin-checkin/server.js'; 
+
 // - General documentation: https://soundworks.dev/
 // - API documentation:     https://soundworks.dev/api
 // - Issue Tracker:         https://github.com/collective-soundworks/soundworks/issues
@@ -33,7 +36,11 @@ server.useDefaultApplicationTemplate();
 server.stateManager.registerSchema('global', globalSchema);
 // register the schema into the state manager
 server.stateManager.registerSchema('thing', thingSchema);
-
+/*
+//register plugin
+server.pluginManager.register('sync', pluginSync); 
+server.pluginManager.register('checkin', pluginCheckin); 
+*/
 
 /**
  * Launch application (init plugins, http server, etc.)
@@ -42,6 +49,8 @@ await server.start();
 // create the shared global state instance 
 const global = await server.stateManager.create('global'); 
 console.log(global.getValues());
+
+
 
 // and do your own stuff!
 

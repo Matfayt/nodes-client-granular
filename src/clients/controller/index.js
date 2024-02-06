@@ -4,6 +4,7 @@ import launcher from '@soundworks/helpers/launcher.js';
 
 import { html, render } from 'lit';
 import '../components/sw-audit.js';
+// import pluginSync from '@soundworks/plugin-sync/client.js';
 
 import '@ircam/sc-components/sc-button.js';
 import '@ircam/sc-components/sc-text.js'; 
@@ -11,6 +12,7 @@ import '@ircam/sc-components/sc-slider.js';
 import '@ircam/sc-components/sc-toggle.js';
 import '@ircam/sc-components/sc-dial.js';
 import '@ircam/sc-components/sc-radio.js';
+import '@ircam/sc-components/sc-number.js';
 
 
 // - General documentation: https://soundworks.dev/
@@ -20,7 +22,7 @@ import '@ircam/sc-components/sc-radio.js';
 
 const config = window.SOUNDWORKS_CONFIG;
 
-
+// client.pluginManager.register('sync', pluginSync);
 async function main($container) {
   const client = new Client(config);
 
@@ -28,6 +30,9 @@ async function main($container) {
     initScreensContainer: $container,
     reloadOnVisibilityChange: false,
   });
+
+
+
 
   await client.start();
 
@@ -51,7 +56,7 @@ async function main($container) {
           <div style="padding-bottom: 4px"> 
             <sc-text>ir select</sc-text> 
             <sc-radio 
-              options="${JSON.stringify(['Chapel', 'Cave'])}"
+              options="${JSON.stringify(['Chapel', 'Cave', 'Room'])}"
               value=${global.get('ir')} 
               @change=${e => global.set({ ir: e.detail.value })} 
             ></sc-radio> 
@@ -86,6 +91,9 @@ async function main($container) {
           <h2>Players</h2> 
             ${thingCollection.map(thing => { 
               return html`  
+          <div style="padding-bottom: 4px">
+            <sc-text>${thing.get('id')}</sc-text> 
+            </div>
           <div style="padding-bottom: 4px"> 
             <sc-text>Start Synth</sc-text> 
             <sc-toggle 
@@ -102,6 +110,11 @@ async function main($container) {
               @input=${e => thing.set({ period: e.detail.value })} 
               number-box
             ></sc-slider> 
+            <sc-text>trigger frequency</sc-text> 
+            <sc-number
+              value=${1/thing.get('period')}
+              readonly=true
+            ></sc-number>
           </div>
           <div style="padding-bottom: 4px"> 
             <sc-text>duration</sc-text> 

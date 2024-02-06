@@ -12,7 +12,13 @@ export default {
     type: 'float',
     default: 0.1,
     min: 0.005,
-    max: 0.1,
+    max: 0.9,
+  },
+  triggerFreq: {
+    type: 'float',
+    default: 10,
+    min: 0.005,
+    max: 10000,
   },
   duration: {
     type: 'float',
@@ -41,5 +47,22 @@ export default {
   oscTypeSqr: {
     type: 'boolean',
     event: true,
+  },
+  running: {
+    type: 'boolean',
+    default: false,
+  },
+  startTime: {
+    type: 'float',
+    default: null,
+    nullable: true,
+  },
+  BPM: {
+    type: 'integer',
+    default: 120,
+  },
+  score: {
+    type: 'any',
+    default: [],
   },
 };

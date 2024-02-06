@@ -15,6 +15,10 @@ import { AudioBufferLoader } from '@ircam/sc-loader';
 
 // import {ConvolutionReverb} from './reverb.js';
 
+// import pluginSync from '@soundworks/plugin-sync/client.js'; 
+// import pluginCheckin from '@soundworks/plugin-checkin/client.js'; 
+
+
 
 
 // - General documentation: https://soundworks.dev/
@@ -28,7 +32,13 @@ async function bootstrap() {
    */
   const config = loadConfig(process.env.ENV, import.meta.url);
   const client = new Client(config);
-  
+
+ /*
+  client.pluginManager.register('checkin', pluginCheckin); 
+  client.pluginManager.register('sync', pluginSync, { 
+    getTimeFunction: () => audioContext.currentTime, 
+  });
+   */ 
   /**
    * Register some soundworks plugins, you will need to install the plugins
    * before hand (run `npx soundworks` for help)
@@ -60,32 +70,51 @@ async function bootstrap() {
   // register audioContext
   const audioContext = new AudioContext();
  
-  //from reverbv to audiodestination
+  //from master to ...
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master'); 
   master.connect(audioContext.destination); 
 
+  //impulse response
   async function createReverb() {
     const convolver = audioContext.createConvolver();
   
     // load impulse response from file
     const loader = await new AudioBufferLoader();
-    const arraybuffer = await loader.load("public/assets/"+ global.get('ir') + "_IR.wav", audioContext.sampleRate);
+    const arraybuffer = await loader.load("public/assets/ir/"+ global.get('ir') + "_IR.wav", audioContext.sampleRate);
     convolver.buffer = await arraybuffer;
+    convolver.normalize = true;
   
     return convolver;
   }
 
-  //from reverb to audiodestination
+/* BUFFER ENVELOPE 
+  async function createEnvelope() {
+    const envConvolver = audioContext.createConvolver();
+  
+    //load impulse response
+    const loader = await new AudioBufferLoader();
+    const envarraybuffer = await loader.load("public/assets/env/gmu.env.tri.wav", audioContext.sampleRate);
+
+    envConvolver.buffer = await envarraybuffer;
+  
+    return envConvolver;
+  }
+  
+  const envReverb = await createEnvelope();
+  envReverb.connect();
+  */
+
+  //from reverb gain to ...
   const reverbMaster = audioContext.createGain(); 
   reverbMaster.gain.value = global.get('reverb'); 
   reverbMaster.connect(audioContext.destination); 
 
-  //from reverb to master
+  //from reverb ...
   const reverb = await createReverb();
   reverb.connect(reverbMaster); 
   
-  //from envelope to reverb
+  //from mute to ...
   const mute = audioContext.createGain(); 
   mute.gain.value = global.get('mute') ? 0 : 1; 
   mute.connect(reverb);
@@ -94,6 +123,7 @@ async function bootstrap() {
   //oscilator
   const osc = audioContext.createOscillator();
   osc.start();
+
 
   // create a new scheduler, in the audioContext timeline
   const scheduler = new Scheduler(() => audioContext.currentTime);
@@ -117,6 +147,8 @@ async function bootstrap() {
             //get and change period and duration 
             granular.period = thing.get('period');
             granular.duration = thing.get('duration');
+            granular.frequency = thing.get('triggerFreq');
+            console.log(granular.centsValue);
             granular.osc.frequency.value = thing.get('oscFreq');
           } else if (value !== null) {
             //stop the synth
@@ -130,6 +162,7 @@ async function bootstrap() {
         case 'period': {
           if (GranularSynth !== null) {
             granular.period = thing.get('period');
+            granular.frequency = thing.get('triggerFreq');
           }
           break;
         }
@@ -211,6 +244,7 @@ async function bootstrap() {
     console.log(`Mute ${global.get('mute')}`);
     console.log(`Reverb ${global.get('reverb')}`);
     console.log(`Reverbfile ${global.get('ir')}`);
+    
 
   
   }, true);
