@@ -3,6 +3,7 @@ import { Client } from '@soundworks/core/client.js';
 import launcher from '@soundworks/helpers/launcher.js';
 // import { Scheduler } from './scheduler.js';
 import { Scheduler } from '@ircam/sc-scheduling'; 
+import os from 'node:os';
 
 
 
@@ -10,8 +11,10 @@ import { loadConfig } from '../../utils/load-config.js';
 
 // import some classes from the node-web-audio-api package 
 import { AudioContext, GainNode, OscillatorNode } from 'node-web-audio-api';
-import {GranularSynth} from './granular-synth.js';
 import { AudioBufferLoader } from '@ircam/sc-loader'; 
+
+import GranularSynth from './GranularSynth.js';
+import FeedbackDelay from './FeedbackDelay.js';
 
 // import {ConvolutionReverb} from './reverb.js';
 
@@ -60,13 +63,18 @@ async function bootstrap() {
   await client.start();
   // attach to the global state 
   const global = await client.stateManager.attach('global'); 
-  
+
+  const { id } = client;
+  const hostname = (process.env.EMULATE
+    ? 'emulated'
+    : os.hostname()
+  );
   // create the thing state and initialize it's id field 
-  const thing = await client.stateManager.create('thing', { 
-    id: client.id, 
-
-  }); 
-
+  const thing = await client.stateManager.create('thing', {
+    id,
+    hostname,
+  });
+  
   // register audioContext
   const audioContext = new AudioContext();
  
@@ -74,6 +82,7 @@ async function bootstrap() {
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master'); 
   master.connect(audioContext.destination); 
+  /*
 
   //impulse response
   async function createReverb() {
@@ -87,8 +96,8 @@ async function bootstrap() {
   
     return convolver;
   }
-
-/* BUFFER ENVELOPE 
+  */
+  /* BUFFER ENVELOPE 
   async function createEnvelope() {
     const envConvolver = audioContext.createConvolver();
   
@@ -104,33 +113,38 @@ async function bootstrap() {
   const envReverb = await createEnvelope();
   envReverb.connect();
   */
-
+  /*
   //from reverb gain to ...
   const reverbMaster = audioContext.createGain(); 
   reverbMaster.gain.value = global.get('reverb'); 
   reverbMaster.connect(audioContext.destination); 
-
+  */
+  /*
   //from reverb ...
   const reverb = await createReverb();
   reverb.connect(reverbMaster); 
+  */
   
+  //from delay to ...
+  const delay = new FeedbackDelay(audioContext, {});
+  delay.output.connect(master)
+
+
   //from mute to ...
   const mute = audioContext.createGain(); 
   mute.gain.value = global.get('mute') ? 0 : 1; 
-  mute.connect(reverb);
-  mute.connect(master);
+  // mute.connect(reverb);
+  mute.connect(delay.input);
 
   //oscilator
   const osc = audioContext.createOscillator();
-  osc.start();
-
+  // osc.start();
 
   // create a new scheduler, in the audioContext timeline
   const scheduler = new Scheduler(() => audioContext.currentTime);
   // create our granular synth and connect it to audio destination
   const granular = new GranularSynth(audioContext, osc);
   granular.output.connect(mute);
-
 
   // react to updates triggered from controller 
   thing.onUpdate(updates => {
@@ -140,29 +154,24 @@ async function bootstrap() {
       switch (key) {
         case 'startSynth': {
           if (value === true) {
-            console.log('started')
             // register the synth into the scheduler and start it now
             scheduler.add(granular.render, audioContext.currentTime);
-            console.log('scheduler added');
             //get and change period and duration 
             granular.period = thing.get('period');
             granular.duration = thing.get('duration');
             granular.frequency = thing.get('triggerFreq');
-            console.log(granular.centsValue);
+            // console.log(granular.centsValue);
             granular.osc.frequency.value = thing.get('oscFreq');
           } else if (value !== null) {
             //stop the synth
-            console.log('stopped');
             scheduler.remove(granular.render, audioContext.currentTime);
-            console.log('scheduler removed');
           }
         break;
         }
         //update values if modifed during synth started
         case 'period': {
           if (GranularSynth !== null) {
-            granular.period = thing.get('period');
-            granular.frequency = thing.get('triggerFreq');
+            granular.period = thing.get('period'); 
           }
           break;
         }
@@ -174,10 +183,12 @@ async function bootstrap() {
         }
         case 'oscFreq': {
           if (GranularSynth !== null) {
-            // const now = audioContext.currentTime;
             granular.osc.frequency.value = thing.get('oscFreq');
-
         }
+        break;
+        }
+        case 'oscType': {
+          granular.osc.type = thing.get('oscType');
         break;
         }
         case 'oscTypeSin' : {
@@ -190,6 +201,8 @@ async function bootstrap() {
           if (value === true) {
             granular.osc.type = "triangle";
           } 
+          console.log('oscTypeTri: granular.osc.type', granular.osc.type);
+
           break;
         }
         case 'oscTypeSaw' : {
@@ -205,9 +218,9 @@ async function bootstrap() {
           break;
         }
       } 
-  }
-}); 
-// UPDATE GLOBAL COMMAND RENDER IN NODE CLIENT LOG (SAME IN CONTROLLER INDEX)
+    }
+  }); 
+  // UPDATE GLOBAL COMMAND RENDER IN NODE CLIENT LOG (SAME IN CONTROLLER INDEX)
 
   global.onUpdate(updates => {
 
@@ -226,27 +239,27 @@ async function bootstrap() {
           mute.gain.setTargetAtTime(gain, now, 0.02);  
           break;  
         }  
-        case 'reverb': {  
+        case 'preGain': {   
           const now = audioContext.currentTime;  
-          reverbMaster.gain.setTargetAtTime(value, now, 0.02);  
+          delay.preGain.gain.setTargetAtTime(value, now, 0.02);  
           break;  
         }  
-        case 'ir': {
-          if (createReverb !== null) {
-            reverb.arraybuffer = global.get('ir');
-          }
-          break;
-        }
-        
+        case 'feedback': {   
+          const now = audioContext.currentTime;  
+          delay.feedback.gain.setTargetAtTime(value, now, 0.02); 
+          break;  
+        }  
+        case 'delayTime': {   
+          const now = audioContext.currentTime;  
+          delay.setDelayTime(value, now, 0.02); 
+          break;  
+        }  
+
       }  
     } 
+
     console.log(`Volume ${global.get('master')}`);
     console.log(`Mute ${global.get('mute')}`);
-    console.log(`Reverb ${global.get('reverb')}`);
-    console.log(`Reverbfile ${global.get('ir')}`);
-    
-
-  
   }, true);
   
 }

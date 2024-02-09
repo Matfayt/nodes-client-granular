@@ -32,6 +32,10 @@ export default {
     min: 1,
     max: 15000,
   },
+  oscType: {
+    type: 'string',
+    default: 'sine',
+  },
   oscTypeSin: {
     type: 'boolean',
     event: true,
@@ -64,5 +68,22 @@ export default {
   score: {
     type: 'any',
     default: [],
+  },
+  hostname: {
+    type: 'string',
+    default: null,
+    nullable: true,
+  },
+
+  position: {
+    type: 'any',
+    default: null,
+    nullable: true,
+  },
+
+  audioOutputType: {
+    type: 'any',
+    default: null,
+    nullable: true,
   },
 };
