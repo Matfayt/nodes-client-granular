@@ -14,6 +14,8 @@ import '@ircam/sc-components/sc-dial.js';
 import '@ircam/sc-components/sc-radio.js';
 import '@ircam/sc-components/sc-number.js';
 import '@ircam/sc-components/sc-tab.js';
+import '@ircam/sc-components/sc-bang.js';
+import '@ircam/sc-components/sc-midi.js';
 import thing from '../../server/schemas/thing.js';
 
 
@@ -123,47 +125,72 @@ async function main($container) {
 
   function controlThings(things) {
     return html`  
-          <div style="padding-bottom: 4px"> 
-            <sc-text>Start Synth</sc-text> 
-            <sc-toggle 
-              @change=${e => things.forEach(thing => thing.set({ startSynth: e.detail.value }))} 
-            ></sc-toggle> 
-          </div>
-          <div style="padding-bottom: 4px"> 
-            <sc-text>period</sc-text> 
-            <sc-slider 
-              min=0.005
-              max=0.9
-              @input=${e => things.forEach(thing => thing.set({ period: e.detail.value }))} 
-              number-box
-            ></sc-slider>
-          </div>
-          <div style="padding-bottom: 4px"> 
-            <sc-text>duration</sc-text> 
-            <sc-slider 
-              min=0.01
-              max=0.5
-              @input=${e => things.forEach(thing => thing.set({ duration: e.detail.value }))}  
-              number-box
-            ></sc-slider> 
-          </div>
-          <div style="padding-bottom: 4px"> 
-            <sc-text>oscFrequency</sc-text> 
-            <sc-slider 
-              step = 1
-              min=1 
-              max=15000
-              @input=${e => things.forEach(thing => thing.set({ oscFreq: e.detail.value }))} 
-              number-box
-            ></sc-slider> 
-          </div>
-          <div>
-            <sc-tab
-              options="${JSON.stringify(['sine', 'triangle', 'sawtooth', 'square'])}"
-              @change=${e => things.forEach(thing => thing.set({oscType: e.detail.value}))}
-            ></sc-tab>
-          </div>
-              `; 
+      <div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Start Synth</sc-text> 
+          <sc-toggle 
+            @change=${e => things.forEach(thing => thing.set({ startSynth: e.detail.value }))} 
+          ></sc-toggle> 
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Volume</sc-text> 
+          <sc-slider
+            @input=${e => things.forEach(thing => thing.set({ volume: e.detail.value }))}
+          ></sc-slider> 
+        </div>
+        <div>
+          <sc-text>Jitter</sc-text>
+          <sc-dial 
+            min=0.002
+            max=1
+            value=0.002
+            @input=${e => things.forEach(thing => thing.set({ jitter: e.detail.value }))} 
+          ></sc-dial> 
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>period</sc-text> 
+          <sc-slider 
+            min=0.005
+            max=0.9
+            value=0.1
+            @input=${e => things.forEach(thing => thing.set({ period: e.detail.value }))} 
+            number-box
+          ></sc-slider>
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>duration</sc-text> 
+          <sc-slider 
+            min=0.01
+            max=0.5
+            value=0.1
+            @input=${e => things.forEach(thing => thing.set({ duration: e.detail.value }))}  
+            number-box
+          ></sc-slider> 
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>oscFrequency</sc-text> 
+          <sc-slider 
+            step = 1
+            min=1 
+            max=15000
+            @input=${e => things.forEach(thing => thing.set({ oscFreq: e.detail.value }))} 
+            number-box
+          ></sc-slider> 
+        </div>
+        <div>
+          <sc-text>Change Note</sc-text> 
+          <sc-bang
+            @input=${e => things.forEach(thing => thing.set({changeCent: e.detail.value }))}
+          ></sc-bang>
+        </div>
+        <div>
+          <sc-tab
+            options="${JSON.stringify(['sine', 'triangle', 'sawtooth', 'square'])}"
+            @change=${e => things.forEach(thing => thing.set({oscType: e.detail.value}))}
+          ></sc-tab>
+        </div>
+      </div>
+    `; 
   }
 
   function renderApp() {
@@ -174,6 +201,7 @@ async function main($container) {
             <sw-audit .client="${client}"></sw-audit>
         </header>
         <section>
+          <sc-midi></sc-midi>
           <h2>Global</h2> 
           <h3>Volume</h3>
           <div style="padding-bottom: 4px"> 
@@ -225,13 +253,14 @@ async function main($container) {
         <section>
           <h2>Types</h2> 
 
+          <div style="display: flex">
           ${setupState.get("audioOutputTypes").map( (type) => {
             return html`
-            <h3>Type: ${type}</h3>
-            ${controlThings(getThingStatesSelection(type))}
+              <h3>Type: ${type}</h3>
+              ${controlThings(getThingStatesSelection(type))}
             `;
-
           })}
+          </div>
         </section>
 
         <section>
@@ -243,7 +272,7 @@ async function main($container) {
   }
 
   global.onUpdate(() => {
-     
+    
     console.log(`Volume ${global.get('master')}`);
     console.log(`Mute ${global.get('mute')}`);
   renderApp();}, true);

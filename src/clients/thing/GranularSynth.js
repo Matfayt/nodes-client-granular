@@ -10,13 +10,11 @@ class GranularSynth {
     this.duration = 0.1;
     // position of the grain in the buffer
     // this.position = 0;
+    this.jittFactor = 0.002; // 0.002 works fine
 
-    let vicentino = ["0", "76", "117", "193", "269", "310", "386", "462", "503", "620", "696", "772", "813", "889", "965", "1006", "1082", "1158"];
+    
 
-    function chooseNote() {
-      return vicentino[Math.floor(Math.random() * vicentino.length)];
-    }      
-    this.centsValue = chooseNote();
+    this.centsValue = 200;
     
     // create Oscillator node
     this.osc = this.audioContext.createOscillator();
@@ -25,7 +23,7 @@ class GranularSynth {
     this.osc.detune.value = this.centsValue ;
     console.log(this.osc.frequency.value);
     console.log(this.osc.type);
-    
+     
     // create an output gain on wich will connect all our grains
     this.output = this.audioContext.createGain();
     // bind the render method so that we don't loose the instance context
@@ -36,7 +34,8 @@ class GranularSynth {
   render(currentTime) {
 
     //console.log(currentTime);
-    const jitter = Math.random() * 0.002; 
+    
+    const jitter = Math.random() * this.jittFactor; 
     const grainTime = currentTime + jitter; 
     // create our evenvelop gain
     const env = this.audioContext.createGain();
@@ -47,7 +46,7 @@ class GranularSynth {
     env.gain.value = 0;
     env.gain.setValueAtTime(0, grainTime); 
     env.gain.linearRampToValueAtTime(1, grainTime + this.duration / 2); 
-    env.gain.linearRampToValueAtTime(0, grainTime + this.duration); 
+    env.gain.linearRampToValueAtTime(0, grainTime + this.duration);   
 
     // custom envelope ?
     // env.gain.setValueCurveAtTime([...], startTime, duration);

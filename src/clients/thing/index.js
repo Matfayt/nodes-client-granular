@@ -82,6 +82,10 @@ async function bootstrap() {
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master'); 
   master.connect(audioContext.destination); 
+
+  const volume = audioContext.createGain();
+  volume.gain.value = thing.get('volume');
+  volume.connect(master);
   /*
 
   //impulse response
@@ -127,7 +131,7 @@ async function bootstrap() {
   
   //from delay to ...
   const delay = new FeedbackDelay(audioContext, {});
-  delay.output.connect(master)
+  delay.output.connect(volume);
 
 
   //from mute to ...
@@ -146,6 +150,14 @@ async function bootstrap() {
   const granular = new GranularSynth(audioContext, osc);
   granular.output.connect(mute);
 
+  // Vicentino microtones in cents
+  let vicentino = ["0", "76", "117", "193", "269", "310", "386", "462", "503", "620", "696", "772", "813", "889", "965", "1006", "1082", "1158"];
+
+  //Randomly select a cent value from the list
+  function chooseNote() {
+    return vicentino[Math.floor(Math.random() * vicentino.length)];
+  }
+  
   // react to updates triggered from controller 
   thing.onUpdate(updates => {
     for (let key in updates) {
@@ -169,6 +181,13 @@ async function bootstrap() {
         break;
         }
         //update values if modifed during synth started
+        case 'volume': {
+          if (GranularSynth !== null) {
+            const now = audioContext.currentTime;  
+            volume.gain.setTargetAtTime(value, now, 0.02);
+          }
+          break;
+        }
         case 'period': {
           if (GranularSynth !== null) {
             granular.period = thing.get('period'); 
@@ -181,41 +200,28 @@ async function bootstrap() {
           }
           break;
         }
+        case 'jitter': {
+          if (GranularSynth !== null) {
+            granular.jittFactor = thing.get('jitter');
+          }
+          break;
+        }
         case 'oscFreq': {
           if (GranularSynth !== null) {
             granular.osc.frequency.value = thing.get('oscFreq');
+          }
+        break;
         }
+        case 'changeCent': {
+          if (GranularSynth !== null) {
+            console.log('bang');
+            granular.osc.detune.value = chooseNote();
+          }
         break;
         }
         case 'oscType': {
           granular.osc.type = thing.get('oscType');
         break;
-        }
-        case 'oscTypeSin' : {
-          if (value === true) {
-            granular.osc.type = "sine";
-          } 
-          break;
-        }
-        case 'oscTypeTri' : {
-          if (value === true) {
-            granular.osc.type = "triangle";
-          } 
-          console.log('oscTypeTri: granular.osc.type', granular.osc.type);
-
-          break;
-        }
-        case 'oscTypeSaw' : {
-          if (value === true) {
-            granular.osc.type = "sawtooth";
-          } 
-          break;
-        }
-        case 'oscTypeSqr' : {
-          if (value === true) {
-            granular.osc.type = "square";
-          } 
-          break;
         }
       } 
     }

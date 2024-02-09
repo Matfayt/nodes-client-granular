@@ -8,11 +8,23 @@ export default {
     type: 'boolean',
     default: false,
   },
+  volume: {
+    type: 'float', 
+      default: 1, 
+      min: 0, 
+      max: 1, 
+    }, 
   period: {
     type: 'float',
     default: 0.1,
     min: 0.005,
     max: 0.9,
+  },
+  jitter: {
+    type: 'float',
+    default: 0.002,
+    min: 0.002,
+    max: 1,
   },
   triggerFreq: {
     type: 'float',
@@ -32,42 +44,14 @@ export default {
     min: 1,
     max: 15000,
   },
+  changeCent: {
+    type: 'boolean',
+    default: false,
+    event: true,
+  },
   oscType: {
     type: 'string',
     default: 'sine',
-  },
-  oscTypeSin: {
-    type: 'boolean',
-    event: true,
-  },
-  oscTypeTri: {
-    type: 'boolean',
-    event: true,
-  },
-  oscTypeSaw: {
-    type: 'boolean',
-    event: true,
-  },
-  oscTypeSqr: {
-    type: 'boolean',
-    event: true,
-  },
-  running: {
-    type: 'boolean',
-    default: false,
-  },
-  startTime: {
-    type: 'float',
-    default: null,
-    nullable: true,
-  },
-  BPM: {
-    type: 'integer',
-    default: 120,
-  },
-  score: {
-    type: 'any',
-    default: [],
   },
   hostname: {
     type: 'string',
