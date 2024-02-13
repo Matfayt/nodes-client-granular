@@ -15,6 +15,8 @@ import { AudioBufferLoader } from '@ircam/sc-loader';
 
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
+import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
+import {schema}  from '../../server/schemas/setup.js';
 
 // import {ConvolutionReverb} from './reverb.js';
 
@@ -74,14 +76,67 @@ async function bootstrap() {
     id,
     hostname,
   });
+
+
+
+  // const thingCollection = await client.stateManager.getCollection('thing'); 
+  // const setupState = await client.stateManager.attach('setup');
+
+  // function getSetupDefaultIndex() {
+  //   const getId = thingCollection.get('hostname');
+  //   return getId;
+
+  // }
+
+  // const mcId = getSetupDefaultIndex();
+  // console.log('mcID:', mcId);
+
+  // const mcId = Object.keys(schema.things.thingsPresetsDefault);
+  // const mcId = thingCollection.get('hostname')
+  // const mcId = setupState.get("things").index;
+  // console.log('mcID:', mcId);
+
+
+
   
   // register audioContext
   const audioContext = new AudioContext();
+  const numChannels = 32;
+  
+
+  audioContext.destination.channelCount = numChannels;
+  audioContext.destination.channelInterpretation = 'discrete';
+
+  // await audioContext.resume();
+
+  const merger = audioContext.createChannelMerger(32);
+  merger.channelInterpretation = 'discrete';
+  merger.connect(audioContext.destination);
+
+
+
+  // const engines = Array(numChannels).fill(null);
+  // const logger = Array(numChannels).fill(null);
+
+  // thingCollection.onAttach((thing) => {
+  //   // push engine in first free slot
+  //   for (let i = 0; i < engines.length; i++) {
+  //     if (engines[i] === null) {
+  //       engines[i] = granular;
+  //       logger[i] = thing;
+
+  //       break;
+  //     }
+  //   }
+  //   render(logger);
+  // });
+
  
   //from master to ...
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master'); 
-  master.connect(audioContext.destination); 
+  master.connect(merger, 0, id); 
+  //audioContext.maxChannelCount = 2;
 
   const volume = audioContext.createGain();
   volume.gain.value = thing.get('volume');
@@ -109,12 +164,14 @@ async function bootstrap() {
   const granular = new GranularSynth(audioContext, osc);
   granular.output.connect(mute);
 
+
   // Vicentino microtones in cents
   let vicentino = ["0", "76", "117", "193", "269", "310", "386", "462", "503", "620", "696", "772", "813", "889", "965", "1006", "1082", "1158"];
 
   //Randomly select a cent value from the list
   function chooseNote() {
     return vicentino[Math.floor(Math.random() * vicentino.length)];
+    
   }
   
   // react to updates triggered from controller 
