@@ -86,48 +86,7 @@ async function bootstrap() {
   const volume = audioContext.createGain();
   volume.gain.value = thing.get('volume');
   volume.connect(master);
-  /*
-
-  //impulse response
-  async function createReverb() {
-    const convolver = audioContext.createConvolver();
   
-    // load impulse response from file
-    const loader = await new AudioBufferLoader();
-    const arraybuffer = await loader.load("public/assets/ir/"+ global.get('ir') + "_IR.wav", audioContext.sampleRate);
-    convolver.buffer = await arraybuffer;
-    convolver.normalize = true;
-  
-    return convolver;
-  }
-  */
-  /* BUFFER ENVELOPE 
-  async function createEnvelope() {
-    const envConvolver = audioContext.createConvolver();
-  
-    //load impulse response
-    const loader = await new AudioBufferLoader();
-    const envarraybuffer = await loader.load("public/assets/env/gmu.env.tri.wav", audioContext.sampleRate);
-
-    envConvolver.buffer = await envarraybuffer;
-  
-    return envConvolver;
-  }
-  
-  const envReverb = await createEnvelope();
-  envReverb.connect();
-  */
-  /*
-  //from reverb gain to ...
-  const reverbMaster = audioContext.createGain(); 
-  reverbMaster.gain.value = global.get('reverb'); 
-  reverbMaster.connect(audioContext.destination); 
-  */
-  /*
-  //from reverb ...
-  const reverb = await createReverb();
-  reverb.connect(reverbMaster); 
-  */
   
   //from delay to ...
   const delay = new FeedbackDelay(audioContext, {});
