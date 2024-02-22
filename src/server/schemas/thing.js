@@ -70,4 +70,10 @@ export default {
     default: null,
     nullable: true,
   },
+
+  envelopeType: {
+    type: 'any',
+    default: null,
+    nullable: true,
+  },
 };

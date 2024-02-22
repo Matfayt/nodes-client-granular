@@ -13,6 +13,7 @@ import { loadConfig } from '../../utils/load-config.js';
 import { AudioContext, GainNode, OscillatorNode } from 'node-web-audio-api';
 import { AudioBufferLoader } from '@ircam/sc-loader'; 
 
+
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
 import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
@@ -67,86 +68,41 @@ async function bootstrap() {
   const global = await client.stateManager.attach('global'); 
 
   const { id } = client;
-  const hostname = (process.env.EMULATE
-    ? 'emulated'
-    : os.hostname()
-  );
+  const hostname = process.env.EMULATE ? 'emulated' : os.hostname();
   // create the thing state and initialize it's id field 
   const thing = await client.stateManager.create('thing', {
     id,
     hostname,
   });
 
-
-
-  // const thingCollection = await client.stateManager.getCollection('thing'); 
-  // const setupState = await client.stateManager.attach('setup');
-
-  // function getSetupDefaultIndex() {
-  //   const getId = thingCollection.get('hostname');
-  //   return getId;
-
-  // }
-
-  // const mcId = getSetupDefaultIndex();
-  // console.log('mcID:', mcId);
-
-  // const mcId = Object.keys(schema.things.thingsPresetsDefault);
-  // const mcId = thingCollection.get('hostname')
-  // const mcId = setupState.get("things").index;
-  // console.log('mcID:', mcId);
-
-
-
-  
   // register audioContext
   const audioContext = new AudioContext();
   const numChannels = 32;
   
-
   audioContext.destination.channelCount = numChannels;
   audioContext.destination.channelInterpretation = 'discrete';
 
-  // await audioContext.resume();
-
+  // MAIN AUDIO BUS /////////////////
+  //from merger to ...
   const merger = audioContext.createChannelMerger(32);
   merger.channelInterpretation = 'discrete';
   merger.connect(audioContext.destination);
-
-
-
-  // const engines = Array(numChannels).fill(null);
-  // const logger = Array(numChannels).fill(null);
-
-  // thingCollection.onAttach((thing) => {
-  //   // push engine in first free slot
-  //   for (let i = 0; i < engines.length; i++) {
-  //     if (engines[i] === null) {
-  //       engines[i] = granular;
-  //       logger[i] = thing;
-
-  //       break;
-  //     }
-  //   }
-  //   render(logger);
-  // });
-
  
   //from master to ...
   const master = audioContext.createGain(); 
-  master.gain.value = global.get('master'); 
-  master.connect(merger, 0, id); 
-  //audioContext.maxChannelCount = 2;
+  master.gain.value = global.get('master');
+  // master.connect(audioContext.destination) // for simple output
+  master.connect(merger, 0, id % 32); //for multichannel output (32 max)
+  audioContext.maxChannelCount = 2;
 
+  //from volume to ...
   const volume = audioContext.createGain();
   volume.gain.value = thing.get('volume');
   volume.connect(master);
   
-  
   //from delay to ...
   const delay = new FeedbackDelay(audioContext, {});
   delay.output.connect(volume);
-
 
   //from mute to ...
   const mute = audioContext.createGain(); 
@@ -154,21 +110,60 @@ async function bootstrap() {
   // mute.connect(reverb);
   mute.connect(delay.input);
 
-  //oscilator
-  const osc = audioContext.createOscillator();
-  // osc.start();
-
   // create a new scheduler, in the audioContext timeline
   const scheduler = new Scheduler(() => audioContext.currentTime);
   // create our granular synth and connect it to audio destination
-  const granular = new GranularSynth(audioContext, osc);
+  const granular = new GranularSynth(audioContext);
   granular.output.connect(mute);
 
+  //Envelopes
+  const envelopeFiles = [
+    'public/assets/env/env.gauss.wav',
+    'public/assets/env/env.hanning.wav',
+    'public/assets/env/env.tri.wav',
+    'public/assets/env/env.trapez.short.wav',
+    'public/assets/env/env.trapez.long.wav',
+    'public/assets/env/env.blackman.wav',
+    'public/assets/env/env.expdec.wav',
+    'public/assets/env/env.expmod.wav',
+  ];
+
+  const loader = new AudioBufferLoader({ sampleRate: 8000 }); 
+  const envBuffers = await loader.load(envelopeFiles);
+
+  //Translate to Float32 and manage memory allocation
+  const envChannels = envBuffers.map(buffer => {
+    const env = new Float32Array(buffer.length);
+    buffer.copyFromChannel(env, 0);
+    return env;
+  });
+
+  //Custom sine envelope
+  const waveArraySize = 1000;
+  const waveArray = new Float32Array(waveArraySize);
+  const phaseIncr = Math.PI / (waveArraySize - 1);
+  let phase = 0;
+  for (let i = 0; i < waveArraySize; i++) {
+    const value = Math.sin(phase);
+    waveArray[i] = value;
+    phase +=  phaseIncr;
+  }
+
+  const envelops = {
+    'Gauss': envChannels[0],
+    'Hanning': envChannels[1],
+    'Tri': envChannels[2],
+    'TrapezShort': envChannels[3],
+    'TrapezLong': envChannels[4],
+    'Blackman': envChannels[5],
+    'Expdec': envChannels[6],
+    'Expmod': envChannels[7],
+    'waveArray': waveArray,
+  };
 
   // Vicentino microtones in cents
-  let vicentino = ["0", "76", "117", "193", "269", "310", "386", "462", "503", "620", "696", "772", "813", "889", "965", "1006", "1082", "1158"];
-
-  //Randomly select a cent value from the list
+  const vicentino = ["0", "76", "117", "193", "269", "310", "386", "462", "503", "620", "696", "772", "813", "889", "965", "1006", "1082", "1158"];
+  // Randomly select a cent value from the list
   function chooseNote() {
     return vicentino[Math.floor(Math.random() * vicentino.length)];
     
@@ -187,14 +182,12 @@ async function bootstrap() {
             //get and change period and duration 
             granular.period = thing.get('period');
             granular.duration = thing.get('duration');
-            granular.frequency = thing.get('triggerFreq');
-            // console.log(granular.centsValue);
-            granular.osc.frequency.value = thing.get('oscFreq');
+            granular.frequency = thing.get('oscFreq');
           } else if (value !== null) {
             //stop the synth
             scheduler.remove(granular.render, audioContext.currentTime);
           }
-        break;
+          break;
         }
         //update values if modifed during synth started
         case 'volume': {
@@ -224,20 +217,25 @@ async function bootstrap() {
         }
         case 'oscFreq': {
           if (GranularSynth !== null) {
-            granular.osc.frequency.value = thing.get('oscFreq');
+            granular.frequency = thing.get('oscFreq');
           }
-        break;
+          break;
         }
         case 'changeCent': {
           if (GranularSynth !== null) {
             console.log('bang');
-            granular.osc.detune.value = chooseNote();
+            granular.detune = chooseNote();
           }
-        break;
+          break;
         }
         case 'oscType': {
-          granular.osc.type = thing.get('oscType');
-        break;
+          granular.type = thing.get('oscType');
+          break;
+        }
+        case 'envelopeType': {
+          const type = thing.get('envelopeType');
+          granular.envBuffer = envelops[type];
+          break;
         }
       } 
     }
@@ -273,7 +271,7 @@ async function bootstrap() {
         }  
         case 'delayTime': {   
           const now = audioContext.currentTime;  
-          delay.setDelayTime(value, now, 0.02); 
+          delay.setDelayTime(value, now, 0.02);
           break;  
         }  
 

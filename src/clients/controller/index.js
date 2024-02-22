@@ -48,6 +48,7 @@ async function main($container) {
   thingCollection.onDetach(() => renderApp());
 
   const setupState = await client.stateManager.attach('setup');
+  const envelops = ['waveArray', 'Gauss', 'Hanning', 'Tri', 'TrapezShort', 'TrapezLong','Blackman', 'Expdec', 'Expmod'];
 
 
   function getThingStatesSelection(audioOutputType) {
@@ -114,10 +115,19 @@ async function main($container) {
             ></sc-slider> 
           </div>
           <div>
+            <sc-text>oscType</sc-text> 
             <sc-tab
             options="${JSON.stringify(['sine', 'triangle', 'sawtooth', 'square'])}"
             .value=${thing.get('oscType')}
             @change=${e => thing.set({oscType: e.detail.value})}
+            ></sc-tab>
+          </div>
+          <div>
+            <sc-text>envelopeType</sc-text> 
+            <sc-tab
+            options="${JSON.stringify(envelops)}"
+            .value=${thing.get('envelopeType')}
+            @change=${e => thing.set({envelopeType: e.detail.value})}
             ></sc-tab>
           </div>
             `; 
@@ -189,7 +199,12 @@ async function main($container) {
             @change=${e => things.forEach(thing => thing.set({oscType: e.detail.value}))}
           ></sc-tab>
         </div>
-      </div>
+        <div>
+          <sc-tab
+            options="${JSON.stringify(envelops)}"
+            @change=${e => things.forEach(thing => thing.set({envelopeType: e.detail.value}))}
+          ></sc-tab>
+        </div>
     `; 
   }
 
