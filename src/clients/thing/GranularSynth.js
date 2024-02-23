@@ -2,16 +2,23 @@ class GranularSynth {
   constructor(audioContext) {
     this.audioContext = audioContext;
 
+    this.engineType = 'oscillator'; 
+    console.log(this.engineType);
     // time interval between each grain
     this.period = 0.025;
     
     // duration of each grain
     this.duration = 0.1;
-    // position of the grain in the buffer
-    // this.position = 0;
+
     this.jittFactor = 0.002; // 0.002 works fine
 
     this.envBuffer = new Float32Array([0, 1, 0]);
+
+    this.soundBuffer = new Float32Array([0, 1, 0]);
+    this.positionFactor= 0.1;
+
+    
+
 
     this.frequency = 200;
     this.detune = 0;
@@ -27,6 +34,7 @@ class GranularSynth {
   render(currentTime) {
     const jitter = Math.random() * this.jittFactor; 
     const grainTime = currentTime + jitter; 
+    const position = (this.soundBuffer.duration * this.positionFactor);
     // create our evenvelop gain
     const env = this.audioContext.createGain();
     // connect it to output
@@ -45,8 +53,24 @@ class GranularSynth {
     osc.detune.value = this.detune;
     osc.frequency.value = this.frequency;
     osc.connect(env);
-    osc.start(grainTime);
-    osc.stop(grainTime + this.duration);
+    // osc.start(grainTime);
+    // osc.stop(grainTime + this.duration);
+
+    const src = this.audioContext.createBufferSource();
+    src.buffer = this.soundBuffer;
+    src.connect(env);
+
+
+    if (this.engineType === 'oscillator') {
+      console.log('engineType=oscillator');
+      osc.start(grainTime);
+      osc.stop(grainTime + this.duration);
+
+    } else if (this.engineType === 'buffer') {
+      console.log('engineType=buffer');
+      src.start(grainTime, position);
+      src.stop(grainTime + this.duration);
+    }
 
     // ask to be called at time of next grain
     return currentTime + this.period;

@@ -10,7 +10,7 @@ export const schema = {
   audioOutputTypes: {
     type: 'any',
     default: [
-      'any',
+      // 'any',// uncomment if you want to control them all
       'DAEX', // transducer
       'T10', // speaker
       'CRS', // small speaker

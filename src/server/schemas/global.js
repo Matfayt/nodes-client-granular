@@ -37,4 +37,8 @@ export default {
       min: 0, 
       max: 1, 
     },
+    granularType: {
+      type: 'string',
+      default: 'oscillator', 
+    },
   };

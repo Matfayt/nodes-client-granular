@@ -12,7 +12,7 @@ export default {
     type: 'float', 
       default: 1, 
       min: 0, 
-      max: 1, 
+      max: 2, 
     }, 
   period: {
     type: 'float',
@@ -37,6 +37,12 @@ export default {
     default: 0.1,
     min: 0.01,
     max: 0.5,
+  },
+  startPosition: {
+    type: 'float',
+    default: 0.0,
+    min: 0.0,
+    max: 1.0,
   },
   oscFreq: {
     type: 'integer',
@@ -73,7 +79,11 @@ export default {
 
   envelopeType: {
     type: 'any',
-    default: null,
+    default: 'waveArray',
     nullable: true,
+  },
+  granularType: {
+    type: 'string',
+    default: 'oscillator', 
   },
 };

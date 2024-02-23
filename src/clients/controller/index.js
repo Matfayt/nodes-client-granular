@@ -16,7 +16,9 @@ import '@ircam/sc-components/sc-number.js';
 import '@ircam/sc-components/sc-tab.js';
 import '@ircam/sc-components/sc-bang.js';
 import '@ircam/sc-components/sc-midi.js';
+import '@ircam/sc-components/sc-dragndrop.js';
 import thing from '../../server/schemas/thing.js';
+
 
 
 // - General documentation: https://soundworks.dev/
@@ -48,7 +50,8 @@ async function main($container) {
   thingCollection.onDetach(() => renderApp());
 
   const setupState = await client.stateManager.attach('setup');
-  const envelops = ['waveArray', 'Gauss', 'Hanning', 'Tri', 'TrapezShort', 'TrapezLong','Blackman', 'Expdec', 'Expmod'];
+  const envelops = ['Sine', 'Gauss', 'Hanning', 'Tri', 'TrapS', 'TrapL','Blackman', 'Expdec', 'Expmod'];
+  const periodicWaves = ['sine', 'triangle', 'sawtooth', 'square'];
 
 
   function getThingStatesSelection(audioOutputType) {
@@ -104,6 +107,16 @@ async function main($container) {
           </div>
           </div>
           <div style="padding-bottom: 4px"> 
+            <sc-text>position(buffer)</sc-text> 
+            <sc-slider 
+              min=0
+              max=1
+              value=${thing.get('startPosition')} 
+              @input=${e => thing.set({ startPosition: e.detail.value })} 
+              number-box
+            ></sc-slider> 
+          </div>
+          <div style="padding-bottom: 4px"> 
             <sc-text>oscFrequency</sc-text> 
             <sc-slider 
               step = 1
@@ -117,7 +130,7 @@ async function main($container) {
           <div>
             <sc-text>oscType</sc-text> 
             <sc-tab
-            options="${JSON.stringify(['sine', 'triangle', 'sawtooth', 'square'])}"
+            options="${JSON.stringify(periodicWaves)}"
             .value=${thing.get('oscType')}
             @change=${e => thing.set({oscType: e.detail.value})}
             ></sc-tab>
@@ -139,12 +152,16 @@ async function main($container) {
         <div style="padding-bottom: 4px"> 
           <sc-text>Start Synth</sc-text> 
           <sc-toggle 
+            ?active=${things[0].get('startSynth')}
             @change=${e => things.forEach(thing => thing.set({ startSynth: e.detail.value }))} 
           ></sc-toggle> 
         </div>
         <div style="padding-bottom: 4px"> 
           <sc-text>Volume</sc-text> 
           <sc-slider
+            min=0
+            max=2
+            value=${things[0].get('volume')}
             @input=${e => things.forEach(thing => thing.set({ volume: e.detail.value }))}
           ></sc-slider> 
         </div>
@@ -153,16 +170,21 @@ async function main($container) {
           <sc-dial 
             min=0.002
             max=1
-            value=0.002
+            .value=${things[0].get('jitter')}
             @input=${e => things.forEach(thing => thing.set({ jitter: e.detail.value }))} 
           ></sc-dial> 
         </div>
+          <sc-radio
+            value=${things[0].get('granularType')}
+            options="${JSON.stringify(['oscillator', 'buffer'])}"
+            @change=${e => things.forEach(thing => thing.set({ granularType: e.detail.value }))}
+          ></sc-radio>
         <div style="padding-bottom: 4px"> 
           <sc-text>period</sc-text> 
           <sc-slider 
             min=0.005
             max=0.9
-            value=0.1
+            .value=${things[0].get('period')}
             @input=${e => things.forEach(thing => thing.set({ period: e.detail.value }))} 
             number-box
           ></sc-slider>
@@ -172,17 +194,28 @@ async function main($container) {
           <sc-slider 
             min=0.01
             max=0.5
-            value=0.1
+            .value=${things[0].get('duration')}
             @input=${e => things.forEach(thing => thing.set({ duration: e.detail.value }))}  
+            number-box
+          ></sc-slider> 
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>position (buffer)</sc-text> 
+          <sc-slider 
+            min="0"
+            max="1"
+            .value=${things[0].get('startPosition')}
+            @input=${e => things.forEach(thing => thing.set({ startPosition: e.detail.value }))}  
             number-box
           ></sc-slider> 
         </div>
         <div style="padding-bottom: 4px"> 
           <sc-text>oscFrequency</sc-text> 
           <sc-slider 
-            step = 1
+            step=1
             min=1 
             max=15000
+            .value=${things[0].get('oscFreq')}
             @input=${e => things.forEach(thing => thing.set({ oscFreq: e.detail.value }))} 
             number-box
           ></sc-slider> 
@@ -195,13 +228,15 @@ async function main($container) {
         </div>
         <div>
           <sc-tab
-            options="${JSON.stringify(['sine', 'triangle', 'sawtooth', 'square'])}"
+            options="${JSON.stringify(periodicWaves)}"
+            .value=${things[0].get('oscType')}
             @change=${e => things.forEach(thing => thing.set({oscType: e.detail.value}))}
           ></sc-tab>
         </div>
         <div>
           <sc-tab
             options="${JSON.stringify(envelops)}"
+            .value=${things[0].get('envelopeType')}
             @change=${e => things.forEach(thing => thing.set({envelopeType: e.detail.value}))}
           ></sc-tab>
         </div>
@@ -234,6 +269,8 @@ async function main($container) {
               ?active=${global.get('mute')} 
               @change=${e => global.set({ mute: e.detail.value })} 
             ></sc-toggle> 
+          </div>
+          <div>
           </div>
           <h3>Feedback Delay</h3>
           <div style="padding-bottom: 4px"> 

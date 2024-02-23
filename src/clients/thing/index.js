@@ -116,6 +116,13 @@ async function bootstrap() {
   const granular = new GranularSynth(audioContext);
   granular.output.connect(mute);
 
+  //Audio Source Buffer
+  const soundFile = 'public/assets/river.wav';
+  const loaderAudio = new AudioBufferLoader({sampleRate: 48000});
+  const soundBuffer = await loaderAudio.load(soundFile);
+
+  granular.soundBuffer = soundBuffer;
+
   //Envelopes
   const envelopeFiles = [
     'public/assets/env/env.gauss.wav',
@@ -128,7 +135,7 @@ async function bootstrap() {
     'public/assets/env/env.expmod.wav',
   ];
 
-  const loader = new AudioBufferLoader({ sampleRate: 8000 }); 
+  const loader = new AudioBufferLoader({ sampleRate: 48000 }); //same sample rate for everyone
   const envBuffers = await loader.load(envelopeFiles);
 
   //Translate to Float32 and manage memory allocation
@@ -153,12 +160,12 @@ async function bootstrap() {
     'Gauss': envChannels[0],
     'Hanning': envChannels[1],
     'Tri': envChannels[2],
-    'TrapezShort': envChannels[3],
-    'TrapezLong': envChannels[4],
+    'TrapS': envChannels[3],
+    'TrapL': envChannels[4],
     'Blackman': envChannels[5],
     'Expdec': envChannels[6],
     'Expmod': envChannels[7],
-    'waveArray': waveArray,
+    'Sine': waveArray,
   };
 
   // Vicentino microtones in cents
@@ -209,6 +216,12 @@ async function bootstrap() {
           }
           break;
         }
+        case 'startPosition': {
+          if (GranularSynth !== null) {
+            granular.positionFactor = thing.get('startPosition');
+          }
+          break;
+        }
         case 'jitter': {
           if (GranularSynth !== null) {
             granular.jittFactor = thing.get('jitter');
@@ -235,6 +248,10 @@ async function bootstrap() {
         case 'envelopeType': {
           const type = thing.get('envelopeType');
           granular.envBuffer = envelops[type];
+          break;
+        }
+        case 'granularType': {
+          granular.engineType = thing.get('granularType');
           break;
         }
       } 
@@ -273,8 +290,7 @@ async function bootstrap() {
           const now = audioContext.currentTime;  
           delay.setDelayTime(value, now, 0.02);
           break;  
-        }  
-
+        }
       }  
     } 
 
