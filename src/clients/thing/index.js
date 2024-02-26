@@ -88,7 +88,7 @@ async function bootstrap() {
   merger.channelInterpretation = 'discrete';
   merger.connect(audioContext.destination);
  
-  //from master to ...
+  // //from master to ...
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master');
   // master.connect(audioContext.destination) // for simple output
@@ -110,16 +110,16 @@ async function bootstrap() {
   // mute.connect(reverb);
   mute.connect(delay.input);
 
-  // create a new scheduler, in the audioContext timeline
-  const scheduler = new Scheduler(() => audioContext.currentTime);
-  // create our granular synth and connect it to audio destination
-  const granular = new GranularSynth(audioContext);
-  granular.output.connect(mute);
-
   //Audio Source Buffer
   const soundFile = 'public/assets/river.wav';
   const loaderAudio = new AudioBufferLoader({sampleRate: 48000});
   const soundBuffer = await loaderAudio.load(soundFile);
+
+  // create a new scheduler, in the audioContext timeline
+  const scheduler = new Scheduler(() => audioContext.currentTime);
+  // create our granular synth and connect it to audio destination
+  const granular = new GranularSynth(audioContext, soundBuffer);
+  granular.output.connect(mute);
 
   granular.soundBuffer = soundBuffer;
 
@@ -222,9 +222,21 @@ async function bootstrap() {
           }
           break;
         }
-        case 'jitter': {
+      case 'positionJitter': {
           if (GranularSynth !== null) {
-            granular.jittFactor = thing.get('jitter');
+            granular.positionJitter = thing.get('positionJitter');
+          }
+          break;
+        }
+      case 'playbackRate': {
+          if (GranularSynth !== null) {
+            granular.playback = thing.get('playbackRate');
+          }
+          break;
+        }
+        case 'periodJitter': {
+          if (GranularSynth !== null) {
+            granular.periodJittFactor = thing.get('periodJitter');
           }
           break;
         }

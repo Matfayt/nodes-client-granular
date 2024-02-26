@@ -20,7 +20,7 @@ export default {
     min: 0.005,
     max: 0.9,
   },
-  jitter: {
+  periodJitter: {
     type: 'float',
     default: 0.002,
     min: 0.002,
@@ -43,6 +43,18 @@ export default {
     default: 0.0,
     min: 0.0,
     max: 1.0,
+  },
+  positionJitter: {
+    type: 'float',
+    default: 0.0,
+    min: 0.0,
+    max: 1.0,
+  },
+  playbackRate: {
+    type: 'float',
+    default: 1.0,
+    min: 0.0,
+    max: 10.0,
   },
   oscFreq: {
     type: 'integer',

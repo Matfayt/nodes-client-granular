@@ -117,6 +117,16 @@ async function main($container) {
             ></sc-slider> 
           </div>
           <div style="padding-bottom: 4px"> 
+            <sc-text>Playback Rate</sc-text> 
+            <sc-slider 
+              min=${thing.getSchema('playbackRate').min} 
+              max=${thing.getSchema('playbackRate').max} 
+              value=${thing.get('startPosition')} 
+              @input=${e => thing.set({ playbackRate: e.detail.value })} 
+              number-box
+            ></sc-slider> 
+          </div>
+          <div style="padding-bottom: 4px"> 
             <sc-text>oscFrequency</sc-text> 
             <sc-slider 
               step = 1
@@ -165,20 +175,14 @@ async function main($container) {
             @input=${e => things.forEach(thing => thing.set({ volume: e.detail.value }))}
           ></sc-slider> 
         </div>
-        <div>
-          <sc-text>Jitter</sc-text>
-          <sc-dial 
-            min=0.002
-            max=1
-            .value=${things[0].get('jitter')}
-            @input=${e => things.forEach(thing => thing.set({ jitter: e.detail.value }))} 
-          ></sc-dial> 
-        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Source Type</sc-text>
           <sc-radio
             value=${things[0].get('granularType')}
             options="${JSON.stringify(['oscillator', 'buffer'])}"
             @change=${e => things.forEach(thing => thing.set({ granularType: e.detail.value }))}
           ></sc-radio>
+        </div>
         <div style="padding-bottom: 4px"> 
           <sc-text>period</sc-text> 
           <sc-slider 
@@ -188,6 +192,15 @@ async function main($container) {
             @input=${e => things.forEach(thing => thing.set({ period: e.detail.value }))} 
             number-box
           ></sc-slider>
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Jitter (period)</sc-text>
+          <sc-dial 
+            min=0.002
+            max=1
+            .value=${things[0].get('periodJitter')}
+            @input=${e => things.forEach(thing => thing.set({ periodJitter: e.detail.value }))} 
+          ></sc-dial> 
         </div>
         <div style="padding-bottom: 4px"> 
           <sc-text>duration</sc-text> 
@@ -210,6 +223,25 @@ async function main($container) {
           ></sc-slider> 
         </div>
         <div style="padding-bottom: 4px"> 
+          <sc-text>Jitter (position)</sc-text>
+          <sc-dial 
+            min=0.002
+            max=1
+            .value=${things[0].get('positionJitter')}
+            @input=${e => things.forEach(thing => thing.set({ positionJitter: e.detail.value }))} 
+          ></sc-dial> 
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Buffer Playback Rate (detune)</sc-text> 
+          <sc-slider 
+            min=0
+            max=10
+            .value=${things[0].get('playbackRate')}
+            @input=${e => things.forEach(thing => thing.set({ playbackRate  : e.detail.value }))}  
+            number-box
+          ></sc-slider> 
+        </div>
+        <div style="padding-bottom: 4px"> 
           <sc-text>oscFrequency</sc-text> 
           <sc-slider 
             step=1
@@ -221,7 +253,7 @@ async function main($container) {
           ></sc-slider> 
         </div>
         <div>
-          <sc-text>Change Note</sc-text> 
+          <sc-text>Change Note (VicentoRand) </sc-text> 
           <sc-bang
             @input=${e => things.forEach(thing => thing.set({changeCent: e.detail.value }))}
           ></sc-bang>
