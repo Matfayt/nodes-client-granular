@@ -43,13 +43,38 @@ class GranularSynth {
     const grainTime = currentTime + periodJitter;
     // const position = (this.soundBuffer.duration * this.positionFactor); // DEBUG without any Jitter
 
-    // Position for buffer and its jitter (which doesn't actually works quite well...)
-    const minPosFactor = Math.abs (this.positionFactor - this.positionJitter); // in case < 0, set pos value to read an actual buffer index
-    const maxPosFactor = (this.positionFactor + this.positionJitter) % 1; // in case > 1, set value between 0 & 1 "" "" "" "" "" "" "" "" "
+    // Position for buffer and its jitter
+    // The idea is to choose a random value btween position - jitterAmount and position + jitterAmount, but never go below 0 or above 1 to always hear sound  
+    
+    const minPosFactor = this.positionFactor - this.positionJitter; 
+    // in case < 0, set 0 to read an actual buffer index
+    function getMinFactor (factor) {
+      if (factor < 0) {
+        factor = 0;
+      } else{
+        factor = factor;
+      }
+      return factor;
+    }
+
+    // in case > 1, set to 1 to read an actual buffer index
+    const maxPosFactor = this.positionFactor + this.positionJitter;  
+    function getMaxFactor (factor) {
+      if (factor > 1) {
+        factor = 1;
+      } else{
+        factor = factor;
+      }
+      return factor;
+    }
+    const min = getMinFactor(minPosFactor);
+    const max = getMaxFactor(maxPosFactor);
+    
     function getJitterPosFactor(min, max) {
       return Math.random() * (max - min) + min;
     }
-    const jitterPosFactor = getJitterPosFactor(minPosFactor, maxPosFactor); //get a random position value
+
+    const jitterPosFactor = getJitterPosFactor(min, max); //get a random position value
     const position = (this.soundBuffer.duration * jitterPosFactor); // set the actual buffer postion 
 
     // ENVELOPE 

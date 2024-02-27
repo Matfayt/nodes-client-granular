@@ -254,7 +254,6 @@ async function bootstrap() {
         }
         case 'changeCent': {
           if (GranularSynth !== null) {
-            console.log('bang');
             granular.detune = chooseNote();
           }
           break;
