@@ -62,6 +62,12 @@ export default {
     min: 1,
     max: 15000,
   },
+  distoAmount: {
+    type: 'float',
+    default: 1,
+    min: 0,
+    max: 400,
+  },
   changeCent: {
     type: 'boolean',
     default: false,

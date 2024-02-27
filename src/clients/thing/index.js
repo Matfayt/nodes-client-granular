@@ -246,6 +246,12 @@ async function bootstrap() {
           }
           break;
         }
+        case 'distoAmount': {
+          if (GranularSynth !== null) {
+            granular.distortionAmount = thing.get('distoAmount');
+          }
+          break;
+        }
         case 'changeCent': {
           if (GranularSynth !== null) {
             console.log('bang');

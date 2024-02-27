@@ -2,30 +2,34 @@ class GranularSynth {
   constructor(audioContext, soundBuffer) {
     this.audioContext = audioContext;
 
+    //Engine type selection
     this.engineType = 'oscillator'; 
-    console.log(this.engineType);
+
+    //Grain parameters
     // time interval between each grain
     this.period = 0.025;
-    
     // duration of each grain
     this.duration = 0.1;
-
-    this.periodJittFactor = 0.002; // 0.002 works fine
-
-    this.envBuffer = new Float32Array([0, 1, 0]);
-
-    this.soundBuffer = soundBuffer;
+    // position
     this.positionFactor = 0.1; // a factor (O. - 1.) for the buffer length
+    //jitter
+    this.periodJittFactor = 0.002; // 0.002 works fine
     this.positionJitter = 0.1;
 
-    this.frequency = 200;
-    this.detune = 0;
-    this.type = 'sine';
-    this.playback = 1.0;
+    //Envelope buffer
+    this.envBuffer = new Float32Array([0, 1, 0]);
 
-    
+    //Sound Buffer
+    this.soundBuffer = soundBuffer;
+    this.playback = 1.0; // Playback rate aka sample rate (1 is 44100, 0.5 is 22050 etc...)
 
+    //Oscillator parameters
+    this.frequency = 200;//In Hz 
+    this.detune = 0; //in cents
+    this.type = 'sine'; // defaut = "sine" can be "sine", "square", "sawtooth", "triangle" and "custom"
     
+    // Set distortion amount to control waveshaper
+    this.distortionAmount = 0;
 
     // create an output gain on wich will connect all our grains
     this.output = this.audioContext.createGain();
@@ -48,24 +52,47 @@ class GranularSynth {
     const jitterPosFactor = getJitterPosFactor(minPosFactor, maxPosFactor); //get a random position value
     const position = (this.soundBuffer.duration * jitterPosFactor); // set the actual buffer postion 
 
-    // create our evenvelop gain
+    // ENVELOPE 
     const env = this.audioContext.createGain();
+
     // connect it to output
     env.connect(this.output);
-    
+
     // schedule the fadein and fadeout
     env.gain.value = 0;
     env.gain.setValueAtTime(0, grainTime); //Make sure set 0 at the end of envelope
     env.gain.setValueCurveAtTime(this.envBuffer, grainTime, this.duration);
 
+    //DISTORTION NODE (copy/paste from mdn)
+    const distortion = this.audioContext.createWaveShaper();
+    function makeDistortionCurve(amount) {
+      const k = typeof amount === "number" ? amount : 50;
+      const n_samples = 44100;
+      const curve = new Float32Array(n_samples);
+      const deg = Math.PI / 180;
+
+      for (let i = 0; i < n_samples; i++) {
+        const x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    distortion.curve = makeDistortionCurve(this.distortionAmount);
+    distortion.oversample = "4x";
+    distortion.connect(env);
+
+    //OSCILLATOR VS BUFFER
     if (this.engineType === 'oscillator') {
       // console.log('engineType=oscillator');
       const osc = this.audioContext.createOscillator();
       osc.type = this.type; // defaut = "sine" can be "sine", "square", "sawtooth", "triangle" and "custom"
       // this.osc.frequency.value = 100 ; // valeur en hertz
+
       osc.detune.value = this.detune;
       osc.frequency.value = this.frequency;
-      osc.connect(env);
+      // osc.connect(env);
+      osc.connect(distortion);
       osc.start(grainTime);
       osc.stop(grainTime + this.duration);
 
@@ -75,12 +102,13 @@ class GranularSynth {
       src.buffer = this.soundBuffer;
       src.detune.value = this.detune;
       src.playbackRate.value = this.playback;
-      src.connect(env);
+      src.connect(distortion);
       src.start(grainTime, position);
       src.stop(grainTime + this.duration);
     }
 
     // DEBUG (handmade simple envelope) /////////////////
+
     // env.gain.linearRampToValueAtTime(1, grainTime + this.duration / 2); 
     // env.gain.linearRampToValueAtTime(0, grainTime + this.duration);
 

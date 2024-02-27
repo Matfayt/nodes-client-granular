@@ -252,6 +252,15 @@ async function main($container) {
             number-box
           ></sc-slider> 
         </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>K-rate Distortion</sc-text>
+          <sc-dial 
+            min=0.0
+            max=400
+            .value=${things[0].get('distoAmount')}
+            @input=${e => things.forEach(thing => thing.set({ distoAmount: e.detail.value }))} 
+          ></sc-dial> 
+        </div>
         <div>
           <sc-text>Change Note (VicentoRand) </sc-text> 
           <sc-bang
