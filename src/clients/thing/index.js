@@ -16,6 +16,7 @@ import { AudioBufferLoader } from '@ircam/sc-loader';
 
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
+import LedBlink from './LedBlink.js';
 import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
 import {schema}  from '../../server/schemas/setup.js';
 
@@ -87,12 +88,15 @@ async function bootstrap() {
   const merger = audioContext.createChannelMerger(32);
   merger.channelInterpretation = 'discrete';
   merger.connect(audioContext.destination);
+
+  
  
   // //from master to ...
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master');
   // master.connect(audioContext.destination) // for simple output
   master.connect(merger, 0, id % 32); //for multichannel output (32 max)
+  // master.connect(analyserNode);
   audioContext.maxChannelCount = 2;
 
   //from volume to ...
@@ -119,6 +123,7 @@ async function bootstrap() {
   const scheduler = new Scheduler(() => audioContext.currentTime);
   // create our granular synth and connect it to audio destination
   const granular = new GranularSynth(audioContext, soundBuffer);
+
   granular.output.connect(mute);
 
   granular.soundBuffer = soundBuffer;

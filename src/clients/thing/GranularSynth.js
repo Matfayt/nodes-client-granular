@@ -1,3 +1,4 @@
+import LedBlink from './LedBlink.js';
 class GranularSynth {
   constructor(audioContext, soundBuffer) {
     this.audioContext = audioContext;
@@ -31,6 +32,8 @@ class GranularSynth {
     // Set distortion amount to control waveshaper
     this.distortionAmount = 0;
 
+    this.leds = new LedBlink(this.audioContext);
+
     // create an output gain on wich will connect all our grains
     this.output = this.audioContext.createGain();
     // bind the render method so that we don't loose the instance context
@@ -42,6 +45,15 @@ class GranularSynth {
     const periodJitter = Math.random() * this.periodJittFactor; 
     const grainTime = currentTime + periodJitter;
     // const position = (this.soundBuffer.duration * this.positionFactor); // DEBUG without any Jitter
+
+    //analyser node ?
+    // const analyserNode = this.audioContext.createAnalyser();
+    // analyserNode.fftsize = 256;
+    // const bufferSize = analyserNode.fftsize;
+    // const analyserArray = new Float32Array(analyserNode.fftSize);
+    // const toPrint = analyserNode.getFloatTimeDomainData(analyserArray);
+    // console.log(bufferSize);
+    // console.log(toPrint);
 
     // Position for buffer and its jitter
     // The idea is to choose a random value btween position - jitterAmount and position + jitterAmount, but never go below 0 or above 1 to always hear sound  
@@ -82,6 +94,7 @@ class GranularSynth {
 
     // connect it to output
     env.connect(this.output);
+    
 
     // schedule the fadein and fadeout
     env.gain.value = 0;
@@ -118,6 +131,7 @@ class GranularSynth {
       osc.frequency.value = this.frequency;
       // osc.connect(env);
       osc.connect(distortion);
+      // osc.connect(analyserNode);
       osc.start(grainTime);
       osc.stop(grainTime + this.duration);
 
