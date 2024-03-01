@@ -16,7 +16,6 @@ import { AudioBufferLoader } from '@ircam/sc-loader';
 
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
-import LedBlink from './LedBlink.js';
 import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
 import {schema}  from '../../server/schemas/setup.js';
 
@@ -184,18 +183,32 @@ async function bootstrap() {
   mute.connect(delay.input);
 
   //Audio Source Buffer
-  const soundFile = 'public/assets/river.wav';
-  const loaderAudio = new AudioBufferLoader({sampleRate: 48000});
-  const soundBuffer = await loaderAudio.load(soundFile);
+  // search for paths
+  const soundFiles = [
+    'public/assets/river.wav',
+    'public/assets/burn.wav',
+    'public/assets/clang.wav',
+  ];
+
+  //Load the actual buffers
+  const loaderAudio = new AudioBufferLoader({sampleRate: 48000}); //evryone at 48000 
+  const soundBuffer = await loaderAudio.load(soundFiles);
+
+  // Name to index for easy manipulation with interface (thing.get(string))
+  const sounds = {
+    'river' : soundBuffer[0],
+    'burn' : soundBuffer[1],
+    'clang' : soundBuffer[2],
+  };
 
   // create a new scheduler, in the audioContext timeline
   const scheduler = new Scheduler(() => audioContext.currentTime);
   // create our granular synth and connect it to audio destination
   const granular = new GranularSynth(audioContext, soundBuffer);
-
+  // Set a default value so it can read  
+  granular.soundBuffer = soundBuffer[0]; 
+  // Connect it to mute (output) 
   granular.output.connect(mute);
-
-  granular.soundBuffer = soundBuffer;
 
   //Envelopes
   const envelopeFiles = [
@@ -336,9 +349,16 @@ async function bootstrap() {
           granular.type = thing.get('oscType');
           break;
         }
+        case 'soundFile': {
+          const file = thing.get('soundFile');
+          granular.soundBuffer = sounds[file];
+          console.log(sounds[file]);
+          break;
+        }
         case 'envelopeType': {
           const type = thing.get('envelopeType');
           granular.envBuffer = envelops[type];
+          console.log(envelops[type]);
           break;
         }
         case 'granularType': {

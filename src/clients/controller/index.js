@@ -17,6 +17,7 @@ import '@ircam/sc-components/sc-tab.js';
 import '@ircam/sc-components/sc-bang.js';
 import '@ircam/sc-components/sc-midi.js';
 import '@ircam/sc-components/sc-dragndrop.js';
+import '@ircam/sc-components/sc-select.js';
 import thing from '../../server/schemas/thing.js';
 
 
@@ -182,6 +183,14 @@ async function main($container) {
             options="${JSON.stringify(['oscillator', 'buffer'])}"
             @change=${e => things.forEach(thing => thing.set({ granularType: e.detail.value }))}
           ></sc-radio>
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Sound File</sc-text>
+          <sc-select
+            value=${things[0].get('soundFile')}
+            options="${JSON.stringify(['river', 'burn', 'clang'])}"
+            @change=${e => things.forEach(thing => thing.set({ soundFile: e.detail.value }))}
+          ></sc-select>
         </div>
         <div style="padding-bottom: 4px"> 
           <sc-text>period</sc-text> 

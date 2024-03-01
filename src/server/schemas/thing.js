@@ -104,4 +104,9 @@ export default {
     type: 'string',
     default: 'oscillator', 
   },
+  soundFile: {
+    type: 'string',
+    default: 'river',
+    nullable: true, 
+  },
 };

@@ -1,4 +1,3 @@
-import LedBlink from './LedBlink.js';
 class GranularSynth {
   constructor(audioContext, soundBuffer) {
     this.audioContext = audioContext;
@@ -32,8 +31,6 @@ class GranularSynth {
     // Set distortion amount to control waveshaper
     this.distortionAmount = 0;
 
-    this.leds = new LedBlink(this.audioContext);
-
     // create an output gain on wich will connect all our grains
     this.output = this.audioContext.createGain();
     // bind the render method so that we don't loose the instance context
@@ -55,7 +52,7 @@ class GranularSynth {
     // console.log(bufferSize);
     //Sum squares to get energy
     const energy = this.analyserArray.reduce( (e, v) => e + v * v, 0.) / this.analyserNode.fftSize;
-    console.log(energy);
+    // console.log(energy);
     setTimeout(() => this.visualRender(),100); // Refresh Rate
     
     // const ws281x = require('rpi-ws281x-native');
