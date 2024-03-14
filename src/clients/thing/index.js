@@ -5,27 +5,18 @@ import launcher from '@soundworks/helpers/launcher.js';
 import { Scheduler } from '@ircam/sc-scheduling'; 
 import os from 'node:os';
 
-
-
 import { loadConfig } from '../../utils/load-config.js';
 
 // import some classes from the node-web-audio-api package 
 import { AudioContext, GainNode, OscillatorNode } from 'node-web-audio-api';
 import { AudioBufferLoader } from '@ircam/sc-loader'; 
 
-
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
 import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
 import {schema}  from '../../server/schemas/setup.js';
 
-// import {ConvolutionReverb} from './reverb.js';
-
-// import pluginSync from '@soundworks/plugin-sync/client.js'; 
-// import pluginCheckin from '@soundworks/plugin-checkin/client.js'; 
-
-
-
+// import { config as ledConfig } from './led.js';
 
 // - General documentation: https://soundworks.dev/
 // - API documentation:     https://soundworks.dev/api
@@ -39,12 +30,9 @@ async function bootstrap() {
   const config = loadConfig(process.env.ENV, import.meta.url);
   const client = new Client(config);
 
- /*
-  client.pluginManager.register('checkin', pluginCheckin); 
-  client.pluginManager.register('sync', pluginSync, { 
-    getTimeFunction: () => audioContext.currentTime, 
-  });
-   */ 
+  //LEDS///////
+  // const ledClient = new Client({ role: 'dotpi-led-client', ...ledConfig });
+
   /**
    * Register some soundworks plugins, you will need to install the plugins
    * before hand (run `npx soundworks` for help)
@@ -64,6 +52,11 @@ async function bootstrap() {
    * Launch application
    */
   await client.start();
+
+  //LEDS create
+  // await ledClient.start();
+  // const rgb = await ledClient.stateManager.create('rgb');
+
   // attach to the global state 
   const global = await client.stateManager.attach('global'); 
 
@@ -77,26 +70,27 @@ async function bootstrap() {
 
   // register audioContext
   const audioContext = new AudioContext();
-  const numChannels = 32;
+  // const numChannels = 32;
   
-  audioContext.destination.channelCount = numChannels;
-  audioContext.destination.channelInterpretation = 'discrete';
+  // audioContext.destination.channelCount = numChannels;
+  // audioContext.destination.channelInterpretation = 'discrete';
 
   // MAIN AUDIO BUS /////////////////
-  //from merger to ...
-  const merger = audioContext.createChannelMerger(32);
-  merger.channelInterpretation = 'discrete';
-  merger.connect(audioContext.destination);
+  // from merger to ...
+  // const merger = audioContext.createChannelMerger(32);
+  // merger.channelInterpretation = 'discrete';
+  // merger.connect(audioContext.destination);
 
-  
- 
   // //from master to ...
   const master = audioContext.createGain(); 
   master.gain.value = global.get('master');
-  // master.connect(audioContext.destination) // for simple output
-  master.connect(merger, 0, id % 32); //for multichannel output (32 max)
-  // master.connect(analyserNode);
-  audioContext.maxChannelCount = 2;
+
+  // MULTIPLE OUTPUT
+  // master.connect(merger, 0, id % 32); //for multichannel output (32 max)
+  // audioContext.maxChannelCount = 2;
+
+  // SIMPLE OUTPUT
+  master.connect(audioContext.destination) // for simple output
 
   //from volume to ...
   const volume = audioContext.createGain();
@@ -113,8 +107,53 @@ async function bootstrap() {
   // mute.connect(reverb);
   mute.connect(delay.input);
 
+  //Analyser Node to get info about outputed sound and optionnally control leds
+  const analyserNode = audioContext.createAnalyser();
+  analyserNode.fftSize = 512;
+  const analyserBufferSize = analyserNode.fftSize
+  // analyserNode.smoothingTimeConstant = 0.2;
+  // const bufferSize = analyserNode.fftSize;
+
+  const analyserArray = new Float32Array(analyserBufferSize);
+
+  //LEDS ////////
+
+  // setInterval(() => {
+  //   analyserNode.getFloatTimeDomainData(analyserArray);
+  //   // console.log(bufferSize);
+  //   //Sum squares to get energy and divide to get 0. to 1.
+  //   const energy = analyserArray.reduce( (e, v) => e + v * v, 0.) / analyserNode.fftSize;
+  //   master.connect(analyserNode);
+
+  //   // const oscType = thing.get('oscType');
+  //   // const granularType = thing.get('granularType');
+
+  //   // let red = 255;
+  //   // let green = 255;
+  //   // let blue = 255;
+
+  //   // if (granularType === 'oscillator') {
+  //   //   if (oscType === 'sine') {
+  //   //     red: 130;
+  //   //     green: 0;
+  //   //     blue: 0;
+  //   //   } else if (oscType === 'sawtooth') {
+  //   //     red: 0;
+  //   //     green: 0;
+  //   //     blue: 148;
+  //   //   }
+  //   // } 
+
+  //   //Set rgb leds 
+  //   rgb.set({
+  //     r: energy * 3, //255 cause energy from 0. to 1.
+  //     g: energy * 234,
+  //     b: energy * 0,
+  //   });
+  // }, 20);
+
   //Audio Source Buffer
-  // search for paths
+  // Paths
   const soundFiles = [
     'public/assets/river.wav',
     'public/assets/burn.wav',
@@ -136,10 +175,11 @@ async function bootstrap() {
   const scheduler = new Scheduler(() => audioContext.currentTime);
   // create our granular synth and connect it to audio destination
   const granular = new GranularSynth(audioContext, soundBuffer);
-  // Set a default value so it can read  
+  // Set a default value so it can read one at init 
   granular.soundBuffer = soundBuffer[0]; 
   // Connect it to mute (output) 
   granular.output.connect(mute);
+  // granular.energy = energy;
 
   //Envelopes
   const envelopeFiles = [
@@ -191,7 +231,6 @@ async function bootstrap() {
   // Randomly select a cent value from the list
   function chooseNote() {
     return vicentino[Math.floor(Math.random() * vicentino.length)];
-    
   }
   
   // react to updates triggered from controller 
@@ -240,18 +279,18 @@ async function bootstrap() {
           }
           break;
         }
-      case 'positionJitter': {
+        case 'positionJitter': {
           if (GranularSynth !== null) {
             granular.positionJitter = thing.get('positionJitter');
           }
           break;
-        }
-      case 'playbackRate': {
+          }
+        case 'playbackRate': {
           if (GranularSynth !== null) {
             granular.playback = thing.get('playbackRate');
           }
           break;
-        }
+          }
         case 'periodJitter': {
           if (GranularSynth !== null) {
             granular.periodJittFactor = thing.get('periodJitter');
@@ -283,13 +322,11 @@ async function bootstrap() {
         case 'soundFile': {
           const file = thing.get('soundFile');
           granular.soundBuffer = sounds[file];
-          console.log(sounds[file]);
           break;
         }
         case 'envelopeType': {
           const type = thing.get('envelopeType');
           granular.envBuffer = envelops[type];
-          console.log(envelops[type]);
           break;
         }
         case 'granularType': {
@@ -300,12 +337,9 @@ async function bootstrap() {
     }
   }); 
   // UPDATE GLOBAL COMMAND RENDER IN NODE CLIENT LOG (SAME IN CONTROLLER INDEX)
-
   global.onUpdate(updates => {
-
     for (let key in updates) {  
       const value = updates[key];  
-    
       switch (key) {  
         case 'master': {  
           const now = audioContext.currentTime;  

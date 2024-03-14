@@ -31,39 +31,19 @@ class GranularSynth {
     // Set distortion amount to control waveshaper
     this.distortionAmount = 0;
 
+    // this.energy = 0;
+
     // create an output gain on wich will connect all our grains
     this.output = this.audioContext.createGain();
     // bind the render method so that we don't loose the instance context
     this.render = this.render.bind(this);
-
-    //Analyser Node to get info about outputed sound and optionnally control leds
-    this.analyserNode = this.audioContext.createAnalyser();
-    this.analyserNode.fftSize = 32;
-    this.analyserNode.smoothingTimeConstant = 0.2;
-    // const bufferSize = analyserNode.fftSize;
-    this.analyserArray = new Float32Array(this.analyserNode.frequencyBinCount);
-
-    this.visualRender();
-
-  }
-
-  visualRender() {
-    this.analyserNode.getFloatTimeDomainData(this.analyserArray);
-    // console.log(bufferSize);
-    //Sum squares to get energy
-    const energy = this.analyserArray.reduce( (e, v) => e + v * v, 0.) / this.analyserNode.fftSize;
-    // console.log(energy);
-    setTimeout(() => this.visualRender(),100); // Refresh Rate
-    
-    // const ws281x = require('rpi-ws281x-native');
-
   }
 
   render(currentTime) {
     const periodJitter = Math.random() * this.periodJittFactor; 
     const grainTime = currentTime + periodJitter;
     // const position = (this.soundBuffer.duration * this.positionFactor); // DEBUG without any Jitter
-
+    // console.log(this.energy)
     //analyser node ?
     
 
@@ -106,7 +86,7 @@ class GranularSynth {
 
     // connect it to output
     env.connect(this.output);
-    env.connect(this.analyserNode);
+    // env.connect(this.analyserNode);
 
     // schedule the fadein and fadeout
     env.gain.value = 0;

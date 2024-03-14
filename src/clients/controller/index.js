@@ -2,7 +2,7 @@ import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import launcher from '@soundworks/helpers/launcher.js';
 
-import { html, render } from 'lit';
+import { html, render, nothing } from 'lit';
 import '../components/sw-audit.js';
 // import pluginSync from '@soundworks/plugin-sync/client.js';
 
@@ -67,8 +67,6 @@ async function main($container) {
   }
 
   function renderThing(thing) {
-
-
     return html`  
           <div style="padding-bottom: 4px">
             <sc-text>HostN: ${thing.get('hostname')}</sc-text> 
@@ -158,12 +156,16 @@ async function main($container) {
   }
 
   function controlThings(things) {
+    if (things.length === 0) {
+      return nothing;
+    }
+    
     return html`  
       <div>
         <div style="padding-bottom: 4px"> 
           <sc-text>Start Synth</sc-text> 
           <sc-toggle 
-            ?active=${things[0].get('startSynth')}
+            
             @change=${e => things.forEach(thing => thing.set({ startSynth: e.detail.value }))} 
           ></sc-toggle> 
         </div>
