@@ -16,7 +16,7 @@ import FeedbackDelay from './FeedbackDelay.js';
 import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
 import {schema}  from '../../server/schemas/setup.js';
 
-// import { config as ledConfig } from './led.js';
+import { config as ledConfig } from './led.js';
 
 // - General documentation: https://soundworks.dev/
 // - API documentation:     https://soundworks.dev/api
@@ -31,7 +31,9 @@ async function bootstrap() {
   const client = new Client(config);
 
   //LEDS///////
-  // const ledClient = new Client({ role: 'dotpi-led-client', ...ledConfig });
+  const ledClient = process.env.EMULATE !== undefined
+    ? null
+    : new Client({ role: 'dotpi-led-client', ...ledConfig });
 
   /**
    * Register some soundworks plugins, you will need to install the plugins
@@ -53,9 +55,13 @@ async function bootstrap() {
    */
   await client.start();
 
-  //LEDS create
-  // await ledClient.start();
-  // const rgb = await ledClient.stateManager.create('rgb');
+  // LEDS create
+  let rgb = null;
+
+  if (ledClient) {
+    await ledClient.start();
+    rgb = await ledClient.stateManager.create('rgb');
+  }
 
   // attach to the global state 
   const global = await client.stateManager.attach('global'); 
@@ -116,41 +122,25 @@ async function bootstrap() {
 
   const analyserArray = new Float32Array(analyserBufferSize);
 
-  //LEDS ////////
+  // LEDS ////////
 
-  // setInterval(() => {
-  //   analyserNode.getFloatTimeDomainData(analyserArray);
-  //   // console.log(bufferSize);
-  //   //Sum squares to get energy and divide to get 0. to 1.
-  //   const energy = analyserArray.reduce( (e, v) => e + v * v, 0.) / analyserNode.fftSize;
-  //   master.connect(analyserNode);
+  setInterval(() => {
+    analyserNode.getFloatTimeDomainData(analyserArray);
+    // Sum squares to get energy and divide to get 0. to 1.
+    const energy = analyserArray.reduce( (e, v) => e + v * v, 0.) / analyserNode.fftSize;
+    master.connect(analyserNode);
 
-  //   // const oscType = thing.get('oscType');
-  //   // const granularType = thing.get('granularType');
-
-  //   // let red = 255;
-  //   // let green = 255;
-  //   // let blue = 255;
-
-  //   // if (granularType === 'oscillator') {
-  //   //   if (oscType === 'sine') {
-  //   //     red: 130;
-  //   //     green: 0;
-  //   //     blue: 0;
-  //   //   } else if (oscType === 'sawtooth') {
-  //   //     red: 0;
-  //   //     green: 0;
-  //   //     blue: 148;
-  //   //   }
-  //   // } 
-
-  //   //Set rgb leds 
-  //   rgb.set({
-  //     r: energy * 3, //255 cause energy from 0. to 1.
-  //     g: energy * 234,
-  //     b: energy * 0,
-  //   });
-  // }, 20);
+    //Set rgb leds
+    if (ledClient) {
+      rgb.set({
+        r: energy * 3, //255 cause energy from 0. to 1.
+        g: energy * 234,
+        b: energy * 0,
+      });
+    } else {
+      // console.log(energy);
+    }
+  }, 20);
 
   //Audio Source Buffer
   // Paths
@@ -160,8 +150,8 @@ async function bootstrap() {
     'public/assets/clang.wav',
   ];
 
-  //Load the actual buffers
-  const loaderAudio = new AudioBufferLoader({sampleRate: 48000}); //evryone at 48000 
+  // Load the actual buffers
+  const loaderAudio = new AudioBufferLoader({sampleRate: 48000}); //evryone at 48000
   const soundBuffer = await loaderAudio.load(soundFiles);
 
   // Name to index for easy manipulation with interface (thing.get(string))
@@ -181,7 +171,7 @@ async function bootstrap() {
   granular.output.connect(mute);
   // granular.energy = energy;
 
-  //Envelopes
+  // Envelopes
   const envelopeFiles = [
     'public/assets/env/env.gauss.wav',
     'public/assets/env/env.hanning.wav',
@@ -368,10 +358,7 @@ async function bootstrap() {
           break;  
         }
       }  
-    } 
-
-    console.log(`Volume ${global.get('master')}`);
-    console.log(`Mute ${global.get('mute')}`);
+    }
   }, true);
   
 }
