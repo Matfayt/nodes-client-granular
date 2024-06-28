@@ -113,34 +113,35 @@ async function bootstrap() {
   // mute.connect(reverb);
   mute.connect(delay.input);
 
-  //Analyser Node to get info about outputed sound and optionnally control leds
-  const analyserNode = audioContext.createAnalyser();
-  analyserNode.fftSize = 512;
-  const analyserBufferSize = analyserNode.fftSize
-  // analyserNode.smoothingTimeConstant = 0.2;
-  // const bufferSize = analyserNode.fftSize;
+  // //Analyser Node to get info about outputed sound and optionnally control leds
+  // const analyserNode = audioContext.createAnalyser();
+  // analyserNode.fftSize = 512;
+  // const analyserBufferSize = analyserNode.fftSize
+  // // analyserNode.smoothingTimeConstant = 0.2;
+  // // const bufferSize = analyserNode.fftSize;
 
-  const analyserArray = new Float32Array(analyserBufferSize);
+  // const analyserArray = new Float32Array(analyserBufferSize);
 
-  // LEDS ////////
+  // // LEDS ////////
 
-  setInterval(() => {
-    analyserNode.getFloatTimeDomainData(analyserArray);
-    // Sum squares to get energy and divide to get 0. to 1.
-    const energy = analyserArray.reduce( (e, v) => e + v * v, 0.) / analyserNode.fftSize;
-    master.connect(analyserNode);
+  // setInterval(() => {
+  //   console.log('coucou')
+  //   analyserNode.getFloatTimeDomainData(analyserArray);
+  //   // Sum squares to get energy and divide to get 0. to 1.
+  //   const energy = analyserArray.reduce( (e, v) => e + v * v, 0.) / analyserNode.fftSize;
+  //   master.connect(analyserNode);
 
-    //Set rgb leds
-    if (ledClient) {
-      rgb.set({
-        r: energy * 3, //255 cause energy from 0. to 1.
-        g: energy * 234,
-        b: energy * 0,
-      });
-    } else {
-      // console.log(energy);
-    }
-  }, 20);
+  //   //Set rgb leds
+  //   if (ledClient) {
+  //     rgb.set({
+  //       r: energy * 3, //255 cause energy from 0. to 1.
+  //       g: energy * 234,
+  //       b: energy * 0,
+  //     });
+  //   } else {
+  //     // console.log(energy);
+  //   }
+  // }, 20);
 
   //Audio Source Buffer
   // Paths
@@ -151,7 +152,7 @@ async function bootstrap() {
   ];
 
   // Load the actual buffers
-  const loaderAudio = new AudioBufferLoader({sampleRate: 48000}); //evryone at 48000
+  const loaderAudio = new AudioBufferLoader(audioContext.sampleRate); //evryone at 48000
   const soundBuffer = await loaderAudio.load(soundFiles);
 
   // Name to index for easy manipulation with interface (thing.get(string))
@@ -183,8 +184,8 @@ async function bootstrap() {
     'public/assets/env/env.expmod.wav',
   ];
 
-  const loader = new AudioBufferLoader({ sampleRate: 48000 }); //same sample rate for everyone
-  const envBuffers = await loader.load(envelopeFiles);
+  // const loader = new AudioBufferLoader({ sampleRate: 48000 }); //same sample rate for everyone
+  const envBuffers = await loaderAudio.load(envelopeFiles);
 
   //Translate to Float32 and manage memory allocation
   const envChannels = envBuffers.map(buffer => {
