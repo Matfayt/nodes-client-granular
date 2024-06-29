@@ -109,7 +109,7 @@ class GranularSynth {
     }
 
     distortion.curve = makeDistortionCurve(this.distortionAmount);
-    distortion.oversample = "4x";
+    //distortion.oversample = "4x"; //crashing engine
     distortion.connect(env);
 
     //OSCILLATOR VS BUFFER
