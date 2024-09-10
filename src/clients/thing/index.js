@@ -2,14 +2,14 @@ import '@soundworks/helpers/polyfills.js';
 import { Client } from '@soundworks/core/client.js';
 import launcher from '@soundworks/helpers/launcher.js';
 // import { Scheduler } from './scheduler.js';
-import { Scheduler } from '@ircam/sc-scheduling'; 
+import { Scheduler } from '@ircam/sc-scheduling';
 import os from 'node:os';
 
 import { loadConfig } from '../../utils/load-config.js';
 
-// import some classes from the node-web-audio-api package 
+// import some classes from the node-web-audio-api package
 import { AudioContext, GainNode, OscillatorNode } from 'node-web-audio-api';
-import { AudioBufferLoader } from '@ircam/sc-loader'; 
+import { AudioBufferLoader } from '@ircam/sc-loader';
 
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
@@ -63,12 +63,12 @@ async function bootstrap() {
     rgb = await ledClient.stateManager.create('rgb');
   }
 
-  // attach to the global state 
-  const global = await client.stateManager.attach('global'); 
+  // attach to the global state
+  const global = await client.stateManager.attach('global');
 
   const { id } = client;
   const hostname = process.env.EMULATE ? 'emulated' : os.hostname();
-  // create the thing state and initialize it's id field 
+  // create the thing state and initialize it's id field
   const thing = await client.stateManager.create('thing', {
     id,
     hostname,
@@ -77,7 +77,7 @@ async function bootstrap() {
   // register audioContext
   const audioContext = new AudioContext();
   // const numChannels = 32;
-  
+
   // audioContext.destination.channelCount = numChannels;
   // audioContext.destination.channelInterpretation = 'discrete';
 
@@ -88,7 +88,7 @@ async function bootstrap() {
   // merger.connect(audioContext.destination);
 
   // //from master to ...
-  const master = audioContext.createGain(); 
+  const master = audioContext.createGain();
   master.gain.value = global.get('master');
 
   // MULTIPLE OUTPUT
@@ -102,14 +102,14 @@ async function bootstrap() {
   const volume = audioContext.createGain();
   volume.gain.value = thing.get('volume');
   volume.connect(master);
-  
+
   //from delay to ...
   const delay = new FeedbackDelay(audioContext, {});
   delay.output.connect(volume);
 
   //from mute to ...
-  const mute = audioContext.createGain(); 
-  mute.gain.value = global.get('mute') ? 0 : 1; 
+  const mute = audioContext.createGain();
+  mute.gain.value = global.get('mute') ? 0 : 1;
   // mute.connect(reverb);
   mute.connect(delay.input);
 
@@ -125,7 +125,6 @@ async function bootstrap() {
   // // LEDS ////////
 
   // setInterval(() => {
-  //   console.log('coucou')
   //   analyserNode.getFloatTimeDomainData(analyserArray);
   //   // Sum squares to get energy and divide to get 0. to 1.
   //   const energy = analyserArray.reduce( (e, v) => e + v * v, 0.) / analyserNode.fftSize;
@@ -166,9 +165,9 @@ async function bootstrap() {
   const scheduler = new Scheduler(() => audioContext.currentTime);
   // create our granular synth and connect it to audio destination
   const granular = new GranularSynth(audioContext, soundBuffer);
-  // Set a default value so it can read one at init 
-  granular.soundBuffer = soundBuffer[0]; 
-  // Connect it to mute (output) 
+  // Set a default value so it can read one at init
+  granular.soundBuffer = soundBuffer[0];
+  // Connect it to mute (output)
   granular.output.connect(mute);
   // granular.energy = energy;
 
@@ -223,18 +222,18 @@ async function bootstrap() {
   function chooseNote() {
     return vicentino[Math.floor(Math.random() * vicentino.length)];
   }
-  
-  // react to updates triggered from controller 
+
+  // react to updates triggered from controller
   thing.onUpdate(updates => {
     for (let key in updates) {
       const value = updates[key];
-      
+
       switch (key) {
         case 'startSynth': {
           if (value === true) {
             // register the synth into the scheduler and start it now
             scheduler.add(granular.render, audioContext.currentTime);
-            //get and change period and duration 
+            //get and change period and duration
             granular.period = thing.get('period');
             granular.duration = thing.get('duration');
             granular.frequency = thing.get('oscFreq');
@@ -247,14 +246,14 @@ async function bootstrap() {
         //update values if modifed during synth started
         case 'volume': {
           if (GranularSynth !== null) {
-            const now = audioContext.currentTime;  
+            const now = audioContext.currentTime;
             volume.gain.setTargetAtTime(value, now, 0.02);
           }
           break;
         }
         case 'period': {
           if (GranularSynth !== null) {
-            granular.period = thing.get('period'); 
+            granular.period = thing.get('period');
           }
           break;
         }
@@ -324,44 +323,44 @@ async function bootstrap() {
           granular.engineType = thing.get('granularType');
           break;
         }
-      } 
+      }
     }
-  }); 
+  });
   // UPDATE GLOBAL COMMAND RENDER IN NODE CLIENT LOG (SAME IN CONTROLLER INDEX)
   global.onUpdate(updates => {
-    for (let key in updates) {  
-      const value = updates[key];  
-      switch (key) {  
-        case 'master': {  
-          const now = audioContext.currentTime;  
-          master.gain.setTargetAtTime(value, now, 0.02);  
-          break;  
-        }  
-        case 'mute': {  
-          const gain = value ? 0 : 1;  
-          const now = audioContext.currentTime;  
-          mute.gain.setTargetAtTime(gain, now, 0.02);  
-          break;  
-        }  
-        case 'preGain': {   
-          const now = audioContext.currentTime;  
-          delay.preGain.gain.setTargetAtTime(value, now, 0.02);  
-          break;  
-        }  
-        case 'feedback': {   
-          const now = audioContext.currentTime;  
-          delay.feedback.gain.setTargetAtTime(value, now, 0.02); 
-          break;  
-        }  
-        case 'delayTime': {   
-          const now = audioContext.currentTime;  
-          delay.setDelayTime(value, now, 0.02);
-          break;  
+    for (let key in updates) {
+      const value = updates[key];
+      switch (key) {
+        case 'master': {
+          const now = audioContext.currentTime;
+          master.gain.setTargetAtTime(value, now, 0.02);
+          break;
         }
-      }  
+        case 'mute': {
+          const gain = value ? 0 : 1;
+          const now = audioContext.currentTime;
+          mute.gain.setTargetAtTime(gain, now, 0.02);
+          break;
+        }
+        case 'preGain': {
+          const now = audioContext.currentTime;
+          delay.preGain.gain.setTargetAtTime(value, now, 0.02);
+          break;
+        }
+        case 'feedback': {
+          const now = audioContext.currentTime;
+          delay.feedback.gain.setTargetAtTime(value, now, 0.02);
+          break;
+        }
+        case 'delayTime': {
+          const now = audioContext.currentTime;
+          delay.setDelayTime(value, now, 0.02);
+          break;
+        }
+      }
     }
   }, true);
-  
+
 }
 
 // The launcher allows to fork multiple clients in the same terminal window

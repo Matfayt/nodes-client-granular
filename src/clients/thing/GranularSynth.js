@@ -3,7 +3,7 @@ class GranularSynth {
     this.audioContext = audioContext;
 
     //Engine type selection
-    this.engineType = 'oscillator'; 
+    this.engineType = 'oscillator';
 
     //Grain parameters
     // time interval between each grain
@@ -24,10 +24,10 @@ class GranularSynth {
     this.playback = 1.0; // Playback rate aka sample rate (1 is 44100, 0.5 is 22050 etc...)
 
     //Oscillator parameters
-    this.frequency = 200;//In Hz 
+    this.frequency = 200;//In Hz
     this.detune = 0; //in cents
     this.type = 'sine'; // defaut = "sine" can be "sine", "square", "sawtooth", "triangle" and "custom"
-    
+
     // Set distortion amount to control waveshaper
     this.distortionAmount = 0;
 
@@ -40,17 +40,17 @@ class GranularSynth {
   }
 
   render(currentTime) {
-    const periodJitter = Math.random() * this.periodJittFactor; 
+    const periodJitter = Math.random() * this.periodJittFactor;
     const grainTime = currentTime + periodJitter;
     // const position = (this.soundBuffer.duration * this.positionFactor); // DEBUG without any Jitter
     // console.log(this.energy)
     //analyser node ?
-    
+
 
     // Position for buffer and its jitter
-    // The idea is to choose a random value btween position - jitterAmount and position + jitterAmount, but never go below 0 or above 1 to always hear sound  
-    
-    const minPosFactor = this.positionFactor - this.positionJitter; 
+    // The idea is to choose a random value btween position - jitterAmount and position + jitterAmount, but never go below 0 or above 1 to always hear sound
+
+    const minPosFactor = this.positionFactor - this.positionJitter;
     // in case < 0, set 0 to read an actual buffer index
     function getMinFactor (factor) {
       if (factor < 0) {
@@ -62,7 +62,7 @@ class GranularSynth {
     }
 
     // in case > 1, set to 1 to read an actual buffer index
-    const maxPosFactor = this.positionFactor + this.positionJitter;  
+    const maxPosFactor = this.positionFactor + this.positionJitter;
     function getMaxFactor (factor) {
       if (factor > 1) {
         factor = 1;
@@ -73,15 +73,15 @@ class GranularSynth {
     }
     const min = getMinFactor(minPosFactor);
     const max = getMaxFactor(maxPosFactor);
-    
+
     function getJitterPosFactor(min, max) {
       return Math.random() * (max - min) + min;
     }
 
     const jitterPosFactor = getJitterPosFactor(min, max); //get a random position value
-    const position = (this.soundBuffer.duration * jitterPosFactor); // set the actual buffer postion 
+    const position = (this.soundBuffer.duration * jitterPosFactor); // set the actual buffer postion
 
-    // ENVELOPE 
+    // ENVELOPE
     const env = this.audioContext.createGain();
 
     // connect it to output
@@ -109,7 +109,6 @@ class GranularSynth {
     }
 
     distortion.curve = makeDistortionCurve(this.distortionAmount);
-    //distortion.oversample = "4x"; //crashing engine
     distortion.connect(env);
 
     //OSCILLATOR VS BUFFER
@@ -139,7 +138,7 @@ class GranularSynth {
 
     // DEBUG (handmade simple envelope) /////////////////
 
-    // env.gain.linearRampToValueAtTime(1, grainTime + this.duration / 2); 
+    // env.gain.linearRampToValueAtTime(1, grainTime + this.duration / 2);
     // env.gain.linearRampToValueAtTime(0, grainTime + this.duration);
 
     // DEBUG (only oscillator) //////////
