@@ -13,12 +13,12 @@ export const thingsPresetsDefault = {
 
   'dotpi-dev-013': {
     position: { y: 1, x: 3 },
-    audioOutputType: 'DAEX',
+    audioOutputType: 'T10',
   },
 
   'dotpi-dev-014': {
     position: { y: 1, x: 4 },
-    audioOutputType: 'CRS',
+    audioOutputType: 'T10',
   },
 
   'dotpi-dev-015': {
@@ -35,7 +35,7 @@ export const thingsPresetsDefault = {
   /////// y: 2
   'dotpi-dev-021': {
     position: { y: 2, x: 1 },
-    audioOutputType: 'DAEX',
+    audioOutputType: 'T10',
   },
 
   'dotpi-dev-022': {
@@ -55,18 +55,18 @@ export const thingsPresetsDefault = {
 
   'dotpi-dev-025': {
     position: { y: 2, x: 5 },
-    audioOutputType: 'CRS',
+    audioOutputType: 'T10',
   },
 
   'dotpi-dev-026': {
     position: { y: 2, x: 6 },
-    audioOutputType: 'DAEX',
+    audioOutputType: 'CRS',
   },
 
   /////// y: 3
   'dotpi-dev-031': {
     position: { y: 3, x: 1 },
-    audioOutputType: 'DAEX',
+    audioOutputType: 'CRS',
   },
 
   'dotpi-dev-032': {
@@ -81,7 +81,7 @@ export const thingsPresetsDefault = {
 
   'dotpi-dev-034': {
     position: { y: 3, x: 4 },
-    audioOutputType: 'DAEX',
+    audioOutputType: 'CRS',
   },
 
   'dotpi-dev-035': {
@@ -120,7 +120,7 @@ export const thingsPresetsDefault = {
   /////// y: 5
   'dotpi-dev-051': {
     position: { y: 5, x: 1 },
-    audioOutputType: 'DAEX',
+    audioOutputType: 'CRS',
   },
 
   'dotpi-dev-052': {
@@ -140,7 +140,7 @@ export const thingsPresetsDefault = {
 
   'dotpi-dev-055': {
     position: { y: 5, x: 5 },
-    audioOutputType: 'T10',
+    audioOutputType: 'CRS',
   },
 
   'dotpi-dev-056': {
@@ -152,7 +152,7 @@ export const thingsPresetsDefault = {
   /////// y: 6
   'dotpi-dev-061': {
     position: { y: 6, x: 1 },
-    audioOutputType: 'CRS',
+    audioOutputType: 'DAEX',
   },
 
   'dotpi-dev-062': {
@@ -172,7 +172,7 @@ export const thingsPresetsDefault = {
 
   'dotpi-dev-065': {
     position: { y: 6, x: 5 },
-    audioOutputType: 'CRS',
+    audioOutputType: 'DAEX',
   },
 
   'dotpi-dev-066': {
@@ -184,7 +184,7 @@ export const thingsPresetsDefault = {
   /////// y: 7
   'dotpi-dev-071': {
     position: { y: 7, x: 1 },
-    audioOutputType: 'T10',
+    audioOutputType: 'DAEX',
   },
 
   'dotpi-dev-072': {
@@ -204,7 +204,7 @@ export const thingsPresetsDefault = {
 
   'dotpi-dev-075': {
     position: { y: 7, x: 5 },
-    audioOutputType: 'CRS',
+    audioOutputType: 'DAEX',
   },
 
   'dotpi-dev-076': {

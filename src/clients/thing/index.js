@@ -31,9 +31,11 @@ async function bootstrap() {
   const client = new Client(config);
 
   //LEDS///////
-  const ledClient = process.env.EMULATE !== undefined
-    ? null
-    : new Client({ role: 'dotpi-led-client', ...ledConfig });
+  const ledClient = null
+  // const ledClient = process.env.EMULATE !== undefined
+  //   ? null
+  //   : new Client({ role: 'dotpi-led-client', ...ledConfig });
+
 
   /**
    * Register some soundworks plugins, you will need to install the plugins
@@ -54,7 +56,7 @@ async function bootstrap() {
    * Launch application
    */
   await client.start();
-
+  console.log('client started');
   // LEDS create
   let rgb = null;
 
@@ -65,9 +67,12 @@ async function bootstrap() {
 
   // attach to the global state
   const global = await client.stateManager.attach('global');
+  console.log(global.getValues());
 
   const { id } = client;
   const hostname = process.env.EMULATE ? 'emulated' : os.hostname();
+  console.log(hostname);
+
   // create the thing state and initialize it's id field
   const thing = await client.stateManager.create('thing', {
     id,
