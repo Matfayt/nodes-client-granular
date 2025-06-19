@@ -178,6 +178,22 @@ async function main($container) {
             @input=${e => things.forEach(thing => thing.set({ volume: e.detail.value }))}
           ></sc-slider> 
         </div>
+        <div>
+          <sc-tab
+            options="${JSON.stringify(things[0].getSchema('irFile').list)}"
+            .value=${things[0].get('irFile')}
+            @change=${e => things.forEach(thing => thing.set({ irFile: e.detail.value }))}
+          ></sc-tab>
+        </div>
+        <div style="padding-bottom: 4px"> 
+          <sc-text>Dry/Wet</sc-text> 
+          <sc-slider
+            min=0
+            max=1
+            value=${things[0].get('dryWet')}
+            @input=${e => things.forEach(thing => thing.set({ dryWet: e.detail.value }))}
+          ></sc-slider> 
+        </div>
         <div style="padding-bottom: 4px"> 
           <sc-text>Source Type</sc-text>
           <sc-radio
@@ -190,7 +206,7 @@ async function main($container) {
           <sc-text>Sound File</sc-text>
           <sc-select
             value=${things[0].get('soundFile')}
-            options="${JSON.stringify(['river', 'burn', 'clang'])}"
+            options="${JSON.stringify(['river', 'burn', 'clang', 'bird1', 'bird2', 'clapotis', 'funtain', 'alto', 'frog'])}"
             @change=${e => things.forEach(thing => thing.set({ soundFile: e.detail.value }))}
           ></sc-select>
         </div>

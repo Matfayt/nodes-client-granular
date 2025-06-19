@@ -70,7 +70,6 @@ export default {
   },
   changeCent: {
     type: 'boolean',
-    default: false,
     event: true,
   },
   oscType: {
@@ -109,4 +108,16 @@ export default {
     default: 'river',
     nullable: true, 
   },
+  irFile: {
+    type: 'enum',
+    list: ['cave', 'room', 'chapel'],
+    default: 'room',
+    nullable: true, 
+  },
+  dryWet: {
+    type: 'float',
+    min: 0,
+    max: 1,
+    default: 0, 
+  }
 };

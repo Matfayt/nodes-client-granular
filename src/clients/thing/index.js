@@ -8,15 +8,16 @@ import os from 'node:os';
 import { loadConfig } from '../../utils/load-config.js';
 
 // import some classes from the node-web-audio-api package
-import { AudioContext, GainNode, OscillatorNode } from 'node-web-audio-api';
-import { AudioBufferLoader } from '@ircam/sc-loader';
+import { AudioContext, GainNode, OscillatorNode, ConvolverNode } from 'node-web-audio-api';
+// import { AudioBufferLoader } from '@ircam/sc-loader';
+import { DistributorNode, AudioBufferLoader, PlaceholderNode } from '@ircam/sc-audio';
 
 import GranularSynth from './GranularSynth.js';
 import FeedbackDelay from './FeedbackDelay.js';
 import {thingsPresetsDefault} from '../../server/schemas/setup-default.js';
 import {schema}  from '../../server/schemas/setup.js';
 
-import { config as ledConfig } from './led.js';
+// import {Led} from './Led.js';
 
 // - General documentation: https://soundworks.dev/
 // - API documentation:     https://soundworks.dev/api
@@ -103,20 +104,20 @@ async function bootstrap() {
   // SIMPLE OUTPUT
   master.connect(audioContext.destination) // for simple output
 
-  //from volume to ...
-  const volume = audioContext.createGain();
-  volume.gain.value = thing.get('volume');
-  volume.connect(master);
-
   //from delay to ...
   const delay = new FeedbackDelay(audioContext, {});
-  delay.output.connect(volume);
+  delay.output.connect(master);
 
   //from mute to ...
   const mute = audioContext.createGain();
   mute.gain.value = global.get('mute') ? 0 : 1;
   // mute.connect(reverb);
   mute.connect(delay.input);
+
+  // LEDS
+
+  // const led = new Led({ verbose: false });
+  // led.init(audioContext, scheduler, master);
 
   // //Analyser Node to get info about outputed sound and optionnally control leds
   // const analyserNode = audioContext.createAnalyser();
@@ -153,8 +154,15 @@ async function bootstrap() {
     'public/assets/river.wav',
     'public/assets/burn.wav',
     'public/assets/clang.wav',
+    'public/assets/birds_1.wav',
+    'public/assets/birds_2.wav',
+    'public/assets/clapotis.wav',
+    'public/assets/funtain_reverb.WAV',
+    'public/assets/alto.WAV',
+    'public/assets/frog.wav',
   ];
 
+  
   // Load the actual buffers
   const loaderAudio = new AudioBufferLoader(audioContext.sampleRate); //evryone at 48000
   const soundBuffer = await loaderAudio.load(soundFiles);
@@ -164,7 +172,46 @@ async function bootstrap() {
     'river' : soundBuffer[0],
     'burn' : soundBuffer[1],
     'clang' : soundBuffer[2],
+    'bird1' : soundBuffer[3],
+    'bird2' : soundBuffer[4],
+    'clapotis' : soundBuffer[5],
+    'funtain' : soundBuffer[6],
+    'alto' : soundBuffer[7],
+    'frog' : soundBuffer[8],
   };
+
+  //IMPULSE RESPONSES 
+
+  const impulseResponseFiles = [
+    'public/assets/ir/cave_IR.wav',
+    'public/assets/ir/chapel_IR.wav',
+    'public/assets/ir/room_IR.wav',
+  ];
+
+  //load convolver buffer
+  const convolverLoader = new AudioBufferLoader(audioContext.sampleRate);
+  const convolverBuffer = await convolverLoader.load(impulseResponseFiles);
+
+  const impulseResponses = {
+    'cave' : new ConvolverNode(audioContext, { buffer: convolverBuffer[0] }),
+    'chapel' : new ConvolverNode(audioContext, { buffer: convolverBuffer[1] }),
+    'room' : new ConvolverNode(audioContext, { buffer: convolverBuffer[2] }),
+  };
+  
+  const convolverPlaceholder = new PlaceholderNode(audioContext, { node: impulseResponses[thing.get('irFile')] });
+  convolverPlaceholder.connect(delay.input);
+
+  const dryWet = new DistributorNode(audioContext, {
+    ratio: thing.get('dryWet'),
+  });
+  dryWet.connect(mute, 0);
+  // connect wet output (1) to convolver
+  dryWet.connect(convolverPlaceholder, 1);
+
+  //from volume to ...
+  const volume = audioContext.createGain();
+  volume.gain.value = thing.get('volume');
+  volume.connect(dryWet);
 
   // create a new scheduler, in the audioContext timeline
   const scheduler = new Scheduler(() => audioContext.currentTime);
@@ -173,7 +220,9 @@ async function bootstrap() {
   // Set a default value so it can read one at init
   granular.soundBuffer = soundBuffer[0];
   // Connect it to mute (output)
-  granular.output.connect(mute);
+  // granular.output.connect(mute);
+  // also connect it to convolver 
+  granular.output.connect(volume);
   // granular.energy = energy;
 
   // Envelopes
@@ -316,6 +365,7 @@ async function bootstrap() {
         }
         case 'soundFile': {
           const file = thing.get('soundFile');
+          console.log(file);
           granular.soundBuffer = sounds[file];
           break;
         }
@@ -326,6 +376,14 @@ async function bootstrap() {
         }
         case 'granularType': {
           granular.engineType = thing.get('granularType');
+          break;
+        }
+        case 'dryWet': {
+          dryWet.ratio.setTargetAtTime(thing.get('dryWet'), audioContext.currentTime, 0.01);
+          break;
+        }
+        case 'irFile': {
+          convolverPlaceholder.node = impulseResponses[thing.get('irFile')];
           break;
         }
       }
